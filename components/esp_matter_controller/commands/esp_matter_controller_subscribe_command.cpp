@@ -211,8 +211,8 @@ esp_err_t send_subscribe_attr_command(uint64_t node_id, ScopedMemoryBufferWithSi
     }
 
     subscribe_command *cmd = chip::Platform::New<subscribe_command>(
-        node_id, std::move(attr_paths), std::move(event_paths), min_interval, max_interval, auto_resubscribe, nullptr, 
-        nullptr, nullptr, nullptr, nullptr, keep_subscription);
+                                 node_id, std::move(attr_paths), std::move(event_paths), min_interval, max_interval, auto_resubscribe, nullptr,
+                                 nullptr, nullptr, nullptr, nullptr, keep_subscription);
     if (!cmd) {
         ESP_LOGE(TAG, "Failed to alloc memory for subscribe_command");
         return ESP_ERR_NO_MEM;
@@ -244,8 +244,8 @@ esp_err_t send_subscribe_event_command(uint64_t node_id, ScopedMemoryBufferWithS
     }
 
     subscribe_command *cmd = chip::Platform::New<subscribe_command>(
-        node_id, std::move(attr_paths), std::move(event_paths), min_interval, max_interval, auto_resubscribe, nullptr,
-        nullptr, nullptr, nullptr, nullptr, keep_subscription);
+                                 node_id, std::move(attr_paths), std::move(event_paths), min_interval, max_interval, auto_resubscribe, nullptr,
+                                 nullptr, nullptr, nullptr, nullptr, keep_subscription);
     if (!cmd) {
         ESP_LOGE(TAG, "Failed to alloc memory for subscribe_command");
         return ESP_ERR_NO_MEM;
