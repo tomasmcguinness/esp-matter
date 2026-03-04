@@ -127,7 +127,7 @@ public:
         }
     }
 
-     /** Constructor for command with single path.
+    /** Constructor for command with single path.
      * @note 0xFFFF could be used as wildcard EndpointId
      * @note 0xFFFFFFFF could be used as wildcard ClusterId/AttributeId/EventId
      */
