@@ -54,11 +54,9 @@ namespace {
 
 // this space is for feature validation functions
 
-enum class feature_policy
-{
+enum class feature_policy {
     k_exact_one = 0,        // O.a
     k_at_least_one = 1,     // 0.a+
-    k_at_most_one = 2,      // 0.a-
 };
 
 const char feature_policy_strs[3][16] = {"Exactly one", "At least one", "At most one"};
@@ -82,9 +80,6 @@ bool validate_features(uint32_t feature_flag, feature_policy policy,
     case feature_policy::k_at_least_one:
         result = count >= 1;
         break;
-    case feature_policy::k_at_most_one:
-        result = count <= 1;
-        break;
     }
 
     if (!result) {
@@ -103,10 +98,6 @@ bool validate_features(uint32_t feature_flag, feature_policy policy,
     do { if (!validate_features(config->feature_flags, feature_policy::k_at_least_one, name, {__VA_ARGS__})) \
         return ABORT_CLUSTER_CREATE(cluster); } while(0)
 
-#define VALIDATE_FEATURES_AT_MOST_ONE(name, ...) \
-    do { if (!validate_features(config->feature_flags, feature_policy::k_at_most_one, name, {__VA_ARGS__})) \
-        return ABORT_CLUSTER_CREATE(cluster); } while(0)
-
 } // anonymous namespace
 
 namespace esp_matter {
@@ -121,20 +112,6 @@ cluster_t * ABORT_CLUSTER_CREATE(cluster_t *cluster)
     return NULL;
 }
 } // anonymous namespace
-
-void delegate_init_callback_common(endpoint_t *endpoint)
-{
-    uint16_t endpoint_id = endpoint::get_id(endpoint);
-    cluster_t *cluster = get_first(endpoint);
-    while (cluster) {
-        /* Delegate server init callback */
-        delegate_init_callback_t delegate_init_callback = get_delegate_init_callback(cluster);
-        if (delegate_init_callback) {
-            delegate_init_callback(get_delegate_impl(cluster), endpoint_id);
-        }
-        cluster = get_next(cluster);
-    }
-}
 
 cluster_t *create_default_binding_cluster(endpoint_t *endpoint)
 {
@@ -471,7 +448,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         attribute::create_last_connect_error_value(cluster, nullable<int32_t>());
 
         if (config->feature_map & chip::to_underlying(NetworkCommissioning::Feature::kWiFiNetworkInterface) ||
-            config->feature_map & chip::to_underlying(NetworkCommissioning::Feature::kThreadNetworkInterface)) {
+                config->feature_map & chip::to_underlying(NetworkCommissioning::Feature::kThreadNetworkInterface)) {
             attribute::create_scan_max_time_seconds(cluster, 0);
             attribute::create_connect_max_time_seconds(cluster, 0);
         }
@@ -702,7 +679,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterWiFiNetworkDiagnosticsClusterServerInitCallback,
-            ESPMatterWiFiNetworkDiagnosticsClusterServerShutdownCallback);
+                                                 ESPMatterWiFiNetworkDiagnosticsClusterServerShutdownCallback);
     }
 
     return cluster;
@@ -768,7 +745,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes managed internally */
         global::attribute::create_feature_map(cluster, 0);
 
-
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterEthernetNetworkDiagnosticsClusterServerInitCallback,
@@ -809,7 +785,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Commands */
         command::create_set_utc_time(cluster);
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterTimeSynchronizationClusterServerInitCallback,
-                                         ESPMatterTimeSynchronizationClusterServerShutdownCallback);
+                                                 ESPMatterTimeSynchronizationClusterServerShutdownCallback);
     }
 
     event::create_time_failure(cluster);
@@ -838,7 +814,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterUnitLocalizationClusterServerInitCallback,
-                                         ESPMatterUnitLocalizationClusterServerShutdownCallback);
+                                                 ESPMatterUnitLocalizationClusterServerShutdownCallback);
     }
 
     return cluster;
@@ -905,7 +881,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         global::attribute::create_feature_map(cluster, config->feature_flags);
 
         // check against O.a feature conformance for Wired and Battery
-        VALIDATE_FEATURES_EXACT_ONE("PowerSource,Battery", feature::wired::get_id(), feature::battery::get_id());
+        VALIDATE_FEATURES_EXACT_ONE("Wired, Battery", feature::wired::get_id(), feature::battery::get_id());
 
         /* Features */
         if (has(feature::wired::get_id())) {
@@ -1122,7 +1098,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
             ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
         }
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterScenesManagementClusterServerInitCallback,
-                                         ESPMatterScenesManagementClusterServerShutdownCallback);
+                                                 ESPMatterScenesManagementClusterServerShutdownCallback);
     }
 
     /* Commands */
@@ -1358,9 +1334,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         } else {
             // HEAT and COOL must be checked against O.a+
             VALIDATE_FEATURES_AT_LEAST_ONE("Heat,Cool",
-                                      feature::heating::get_id(), feature::cooling::get_id());
+                                           feature::heating::get_id(), feature::cooling::get_id());
 
-            if(has(feature::heating::get_id())) {
+            if (has(feature::heating::get_id())) {
                 feature::heating::add(cluster, &(config->features.heating));
             }
             if (has(feature::cooling::get_id())) {
@@ -1505,7 +1481,7 @@ static cluster_t *create(endpoint_t *endpoint, T *config, uint8_t flags, uint32_
 namespace hepa_filter_monitoring {
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 {
-    cluster_t *cluster = resource_monitoring::create<config_t, HepaFilterMonitoringDelegateInitCB>(endpoint, config, flags,HepaFilterMonitoring::Id, cluster_revision);
+    cluster_t *cluster = resource_monitoring::create<config_t, HepaFilterMonitoringDelegateInitCB>(endpoint, config, flags, HepaFilterMonitoring::Id, cluster_revision);
     if (cluster && (flags & CLUSTER_FLAG_SERVER)) {
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterHepaFilterMonitoringClusterServerInitCallback,
                                                  ESPMatterHepaFilterMonitoringClusterServerShutdownCallback);
@@ -1517,7 +1493,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 namespace activated_carbon_filter_monitoring {
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 {
-    cluster_t *cluster = resource_monitoring::create<config_t, ActivatedCarbonFilterMonitoringDelegateInitCB>(endpoint, config, flags,ActivatedCarbonFilterMonitoring::Id, cluster_revision);
+    cluster_t *cluster = resource_monitoring::create<config_t, ActivatedCarbonFilterMonitoringDelegateInitCB>(endpoint, config, flags, ActivatedCarbonFilterMonitoring::Id, cluster_revision);
     if (cluster && (flags & CLUSTER_FLAG_SERVER)) {
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterActivatedCarbonFilterMonitoringClusterServerInitCallback,
                                                  ESPMatterActivatedCarbonFilterMonitoringClusterServerShutdownCallback);
@@ -1550,9 +1526,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags, uint32_
 
         // check against O.a+ feature conformance for Numeric Measurement and Level Indication
         VALIDATE_FEATURES_AT_LEAST_ONE("NumericMeasurement,LevelIndication",
-                                      feature::numeric_measurement::get_id(), feature::level_indication::get_id());
+                                       feature::numeric_measurement::get_id(), feature::level_indication::get_id());
 
-        if(has(feature::numeric_measurement::get_id())) {
+        if (has(feature::numeric_measurement::get_id())) {
             feature::numeric_measurement::add(cluster, &(config->features.numeric_measurement));
             if (has(feature::peak_measurement::get_id())) {
                 feature::peak_measurement::add(cluster, &(config->features.peak_measurement));
@@ -1777,7 +1753,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for Spin and Rinse
         VALIDATE_FEATURES_AT_LEAST_ONE("Spin,Rinse",
-                                      feature::spin::get_id(), feature::rinse::get_id());
+                                       feature::spin::get_id(), feature::rinse::get_id());
 
         if (has(feature::spin::get_id())) {
             feature::spin::add(cluster, &(config->features.spin));
@@ -1930,7 +1906,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for Smoke Alarm and CO Alarm
         VALIDATE_FEATURES_AT_LEAST_ONE("Smoke Alarm,CO Alarm",
-                                      feature::smoke_alarm::get_id(), feature::co_alarm::get_id());
+                                       feature::smoke_alarm::get_id(), feature::co_alarm::get_id());
 
         if (has(feature::smoke_alarm::get_id())) {
             feature::smoke_alarm::add(cluster);
@@ -1962,7 +1938,7 @@ const function_generic_t function_list[] = {
     (function_generic_t)MatterDoorLockClusterServerPreAttributeChangedCallback,
 };
 const int function_flags = CLUSTER_FLAG_INIT_FUNCTION | CLUSTER_FLAG_ATTRIBUTE_CHANGED_FUNCTION | CLUSTER_FLAG_SHUTDOWN_FUNCTION |
-    CLUSTER_FLAG_PRE_ATTRIBUTE_CHANGED_FUNCTION;
+                           CLUSTER_FLAG_PRE_ATTRIBUTE_CHANGED_FUNCTION;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 {
@@ -2046,7 +2022,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for Lift and Tilt
         VALIDATE_FEATURES_AT_LEAST_ONE("Lift,Tilt",
-                                      feature::lift::get_id(), feature::tilt::get_id());
+                                       feature::lift::get_id(), feature::tilt::get_id());
 
         if (has(feature::lift::get_id())) {
             feature::lift::add(cluster);
@@ -2077,7 +2053,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 }
 } /* window_covering */
 
-
 namespace switch_cluster {
 const function_generic_t *function_list = NULL;
 const int function_flags = CLUSTER_FLAG_NONE;
@@ -2104,7 +2079,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a feature conformance Latching and Momentary Switch
         VALIDATE_FEATURES_EXACT_ONE("Latching Switch,Momentary Switch",
-                                   feature::latching_switch::get_id(), feature::momentary_switch::get_id());
+                                    feature::latching_switch::get_id(), feature::momentary_switch::get_id());
 
         if (has(feature::latching_switch::get_id())) {
             feature::latching_switch::add(cluster);
@@ -2240,10 +2215,10 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for occupancy sensing
         VALIDATE_FEATURES_AT_LEAST_ONE("Other,Passive Infrared,Ultrasonic,Physical Contact,Active Infrared,Radar,RF Sensing,Vision",
-                                      feature::other::get_id(), feature::passive_infrared::get_id(),
-                                      feature::ultrasonic::get_id(), feature::physical_contact::get_id(),
-                                      feature::active_infrared::get_id(), feature::radar::get_id(),
-                                      feature::rf_sensing::get_id(), feature::vision::get_id());
+                                       feature::other::get_id(), feature::passive_infrared::get_id(),
+                                       feature::ultrasonic::get_id(), feature::physical_contact::get_id(),
+                                       feature::active_infrared::get_id(), feature::radar::get_id(),
+                                       feature::rf_sensing::get_id(), feature::vision::get_id());
 
         if (has(feature::other::get_id())) {
             feature::other::add(cluster);
@@ -2355,7 +2330,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 namespace localization_configuration {
 const function_generic_t function_list[] = {
     (function_generic_t)emberAfLocalizationConfigurationClusterServerInitCallback,
-    (function_generic_t)MatterLocalizationConfigurationClusterServerPreAttributeChangedCallback};
+    (function_generic_t)MatterLocalizationConfigurationClusterServerPreAttributeChangedCallback
+};
 const int function_flags = CLUSTER_FLAG_INIT_FUNCTION | CLUSTER_FLAG_PRE_ATTRIBUTE_CHANGED_FUNCTION;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
@@ -2393,7 +2369,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 namespace time_format_localization {
 const function_generic_t function_list[] = {
     (function_generic_t)emberAfTimeFormatLocalizationClusterServerInitCallback,
-    (function_generic_t)MatterTimeFormatLocalizationClusterServerPreAttributeChangedCallback};
+    (function_generic_t)MatterTimeFormatLocalizationClusterServerPreAttributeChangedCallback
+};
 const int function_flags = CLUSTER_FLAG_INIT_FUNCTION | CLUSTER_FLAG_PRE_ATTRIBUTE_CHANGED_FUNCTION;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
@@ -2447,9 +2424,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         if (config) {
             attribute::create_measured_value(cluster, config->measured_value, 0x0000, 0xFFFF);
             attribute::create_min_measured_value(cluster, config->min_measured_value, 0x0001,
-                                                             0xFFFD);
+                                                 0xFFFD);
             attribute::create_max_measured_value(cluster, config->max_measured_value, 0x0002,
-                                                             0xFFFE);
+                                                 0xFFFE);
         } else {
             ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
         }
@@ -2568,9 +2545,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for pump configuration and control
         VALIDATE_FEATURES_AT_LEAST_ONE("ConstantPressure,CompensatedPressure,ConstantFlow,ConstantSpeed,ConstantTemperature",
-                                      feature::constant_pressure::get_id(), feature::compensated_pressure::get_id(),
-                                      feature::constant_flow::get_id(), feature::constant_speed::get_id(),
-                                      feature::constant_temperature::get_id());
+                                       feature::constant_pressure::get_id(), feature::compensated_pressure::get_id(),
+                                       feature::constant_flow::get_id(), feature::constant_speed::get_id(),
+                                       feature::constant_temperature::get_id());
 
         if (has(feature::constant_pressure::get_id())) {
             feature::constant_pressure::add(cluster, &config->features.constant_pressure);
@@ -2738,7 +2715,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a feature conformance for TN, TL
         VALIDATE_FEATURES_EXACT_ONE("TemperatureNumber,TemperatureLevel",
-                                   feature::temperature_number::get_id(), feature::temperature_level::get_id());
+                                    feature::temperature_number::get_id(), feature::temperature_level::get_id());
 
         if (has(feature::temperature_number::get_id())) {
             feature::temperature_number::add(cluster, &(config->features.temperature_number));
@@ -2809,7 +2786,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes managed internally */
         global::attribute::create_feature_map(cluster, 0);
 
-	    mode_base::attribute::create_supported_modes(cluster, NULL, 0, 0);
+        mode_base::attribute::create_supported_modes(cluster, NULL, 0, 0);
 
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
@@ -2966,7 +2943,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a feature conformance for microwave oven control
         VALIDATE_FEATURES_EXACT_ONE("PowerAsNumber,PowerInWatts",
-                                   feature::power_as_number::get_id(), feature::power_in_watts::get_id());
+                                    feature::power_as_number::get_id(), feature::power_in_watts::get_id());
 
         if (has(feature::power_as_number::get_id())) {
             feature::power_as_number::add(cluster);
@@ -3044,7 +3021,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes managed internally */
         global::attribute::create_feature_map(cluster, 0);
 
-
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
     }
@@ -3083,8 +3059,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a feature conformance for power topology
         VALIDATE_FEATURES_EXACT_ONE("NodeTopology,TreeTopology,SetTopology",
-                                   feature::node_topology::get_id(), feature::tree_topology::get_id(),
-                                   feature::set_topology::get_id());
+                                    feature::node_topology::get_id(), feature::tree_topology::get_id(),
+                                    feature::set_topology::get_id());
 
         if (has(feature::node_topology::get_id())) {
             feature::node_topology::add(cluster);
@@ -3136,7 +3112,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for electrical power measurement
         VALIDATE_FEATURES_AT_LEAST_ONE("Direct Current,Alternating Current",
-                                      feature::direct_current::get_id(), feature::alternating_current::get_id());
+                                       feature::direct_current::get_id(), feature::alternating_current::get_id());
 
         if (has(feature::direct_current::get_id())) {
             feature::direct_current::add(cluster);
@@ -3186,9 +3162,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for electrical energy measurement
         VALIDATE_FEATURES_AT_LEAST_ONE("ImportedEnergy,ExportedEnergy",
-                                      feature::imported_energy::get_id(), feature::exported_energy::get_id());
+                                       feature::imported_energy::get_id(), feature::exported_energy::get_id());
         VALIDATE_FEATURES_AT_LEAST_ONE("CumulativeEnergy,PeriodicEnergy",
-                                      feature::cumulative_energy::get_id(), feature::periodic_energy::get_id());
+                                       feature::cumulative_energy::get_id(), feature::periodic_energy::get_id());
 
         if (has(feature::imported_energy::get_id())) {
             feature::imported_energy::add(cluster);
@@ -3362,6 +3338,34 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         attribute::create_abs_max_power(cluster, 0);
         /** Attributes not managed internally **/
         global::attribute::create_cluster_revision(cluster, cluster_revision);
+        if ((!(has(feature::power_adjustment::get_id())))) {
+            VALIDATE_FEATURES_EXACT_ONE("PowerForecastReporting,StateForecastReporting",
+                                        feature::power_forecast_reporting::get_id(), feature::state_forecast_reporting::get_id());
+            if (has(feature::power_forecast_reporting::get_id())) {
+                VerifyOrReturnValue(feature::power_forecast_reporting::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            }
+            if (has(feature::state_forecast_reporting::get_id())) {
+                VerifyOrReturnValue(feature::state_forecast_reporting::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            }
+        }
+        if (has(feature::start_time_adjustment::get_id()) || has(feature::pausable::get_id()) || has(feature::forecast_adjustment::get_id()) || has(feature::constraint_based_adjustment::get_id())) {
+            VerifyOrReturnValue(feature::power_forecast_reporting::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+        }
+        if (has(feature::power_adjustment::get_id())) {
+            VerifyOrReturnValue(feature::power_adjustment::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+        }
+        if (has(feature::start_time_adjustment::get_id())) {
+            VerifyOrReturnValue(feature::start_time_adjustment::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+        }
+        if (has(feature::pausable::get_id())) {
+            VerifyOrReturnValue(feature::pausable::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+        }
+        if (has(feature::forecast_adjustment::get_id())) {
+            VerifyOrReturnValue(feature::forecast_adjustment::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+        }
+        if (has(feature::constraint_based_adjustment::get_id())) {
+            VerifyOrReturnValue(feature::constraint_based_adjustment::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+        }
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterDeviceEnergyManagementClusterServerInitCallback,
                                                  ESPMatterDeviceEnergyManagementClusterServerShutdownCallback);
     }
@@ -3433,10 +3437,10 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         /* Attributes should managed by application */
         attribute::create_application_name(cluster, NULL, 0);
-        attribute::create_application(cluster, NULL, 0 , 0);
+        attribute::create_application(cluster, NULL, 0, 0);
         attribute::create_status(cluster, 0);
         attribute::create_application_version(cluster, NULL, 0);
-        attribute::create_allowed_vendor_list(cluster, NULL, 0 , 0);
+        attribute::create_allowed_vendor_list(cluster, NULL, 0, 0);
         /** Attributes not managed internally **/
         global::attribute::create_cluster_revision(cluster, cluster_revision);
     }
@@ -3708,7 +3712,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance for energy preference
         VALIDATE_FEATURES_AT_LEAST_ONE("EnergyBalance,LowPowerModeSensitivity",
-                                      feature::energy_balance::get_id(), feature::low_power_mode_sensitivity::get_id());
+                                       feature::energy_balance::get_id(), feature::low_power_mode_sensitivity::get_id());
 
         if (has(feature::energy_balance::get_id())) {
             feature::energy_balance::add(cluster, &(config->features.energy_balance));
@@ -3827,10 +3831,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         attribute::create_supported_stream_usages(cluster, NULL, 0, 0);
         attribute::create_stream_usage_priorities(cluster, NULL, 0, 0);
 
-
         // check against at least one feature conformance
         VALIDATE_FEATURES_AT_LEAST_ONE("Audio,Video,Snapshot",
-                                        feature::audio::get_id(), feature::video::get_id(), feature::snapshot::get_id());
+                                       feature::audio::get_id(), feature::video::get_id(), feature::snapshot::get_id());
         if (has(feature::audio::get_id())) {
             VerifyOrReturnValue(feature::audio::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
             if (has(feature::speaker::get_id())) {
@@ -3848,7 +3851,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
             VerifyOrReturnValue(feature::local_storage::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
 
-        if (has(feature::video::get_id())|| has(feature::snapshot::get_id())) {
+        if (has(feature::video::get_id()) || has(feature::snapshot::get_id())) {
             if (has(feature::image_control::get_id())) {
                 VerifyOrReturnValue(feature::image_control::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
             }
@@ -3902,7 +3905,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         attribute::create_current_sessions(cluster, NULL, 0, 0);
 
-
         command::create_solicit_offer(cluster);
         command::create_solicit_offer_response(cluster);
         command::create_provide_offer(cluster);
@@ -3911,7 +3913,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         command::create_provide_ice_candidates(cluster);
         command::create_end_session(cluster);
         cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterWebRTCTransportProviderClusterServerInitCallback,
-                                         ESPMatterWebRTCTransportProviderClusterServerShutdownCallback);
+                                                 ESPMatterWebRTCTransportProviderClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {
@@ -3944,7 +3946,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         attribute::create_current_sessions(cluster, NULL, 0, 0);
 
-
         command::create_offer(cluster);
         command::create_answer(cluster);
         command::create_ice_candidates(cluster);
@@ -3958,7 +3959,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
     return cluster;
 }
 } /*webrtc transport requestor*/
-
 
 // namespace binary_input_basic {
 //     // ToDo
@@ -4094,7 +4094,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance
         VALIDATE_FEATURES_AT_LEAST_ONE("Positioning,MotionLatching",
-                                      feature::positioning::get_id(), feature::motion_latching::get_id());
+                                       feature::positioning::get_id(), feature::motion_latching::get_id());
         if (has(feature::positioning::get_id())) {
             VerifyOrReturnValue(feature::positioning::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
             if (has(feature::ventilation::get_id())) {
@@ -4175,12 +4175,12 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance
         VALIDATE_FEATURES_AT_LEAST_ONE("Positioning,MotionLatching",
-                                      feature::positioning::get_id(), feature::motion_latching::get_id());
+                                       feature::positioning::get_id(), feature::motion_latching::get_id());
         if (has(feature::positioning::get_id())) {
             VerifyOrReturnValue(feature::positioning::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
 
-            VALIDATE_FEATURES_AT_MOST_ONE("Translation, Rotation, Modulation",
-                                      feature::translation::get_id(), feature::rotation::get_id(), feature::modulation::get_id());
+            VALIDATE_FEATURES_EXACT_ONE("Translation, Rotation, Modulation",
+                                        feature::translation::get_id(), feature::rotation::get_id(), feature::modulation::get_id());
             if (has(feature::translation::get_id())) {
                 VerifyOrReturnValue(feature::translation::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
             }
@@ -4243,7 +4243,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance
         VALIDATE_FEATURES_AT_LEAST_ONE("DigitalPTZ,MechanicalPan,MechanicalTilt,MechanicalZoom",
-                                      feature::digital_ptz::get_id(), feature::mechanical_pan::get_id(), feature::mechanical_tilt::get_id(), feature::mechanical_zoom::get_id());
+                                       feature::digital_ptz::get_id(), feature::mechanical_pan::get_id(), feature::mechanical_tilt::get_id(), feature::mechanical_zoom::get_id());
         if (has(feature::digital_ptz::get_id())) {
             VerifyOrReturnValue(feature::digital_ptz::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
@@ -4365,7 +4365,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         // check against O.a+ feature conformance
         VALIDATE_FEATURES_AT_LEAST_ONE("Pricing,FriendlyCredit,AuxiliaryLoad",
-                                      feature::pricing::get_id(), feature::friendly_credit::get_id(), feature::auxiliary_load::get_id());
+                                       feature::pricing::get_id(), feature::friendly_credit::get_id(), feature::auxiliary_load::get_id());
         if (has(feature::pricing::get_id())) {
             VerifyOrReturnValue(feature::pricing::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
@@ -4571,6 +4571,49 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 }
 
 } /* soil_measurement */
+
+namespace zone_management {
+const function_generic_t *function_list = NULL;
+
+const int function_flags = CLUSTER_FLAG_NONE;
+
+cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
+{
+    cluster_t *cluster = esp_matter::cluster::create(endpoint, ZoneManagement::Id, flags);
+    VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, ZoneManagement::Id));
+    if (flags & CLUSTER_FLAG_SERVER) {
+        // TODO: Add a delegate initialization callback.
+        // The current esp_matter initialization flow makes this hard to implement cleanly.
+
+        static const auto plugin_server_init_cb = CALL_ONCE(MatterZoneManagementPluginServerInitCallback);
+        set_plugin_server_init_callback(cluster, plugin_server_init_cb);
+        add_function_list(cluster, function_list, function_flags);
+
+        /* Attributes managed internally */
+        global::attribute::create_feature_map(cluster, 0);
+        global::attribute::create_cluster_revision(cluster, 0);
+        attribute::create_max_zones(cluster, 1);
+        attribute::create_zones(cluster, NULL, 0, 0);
+        attribute::create_triggers(cluster, NULL, 0, 0);
+        attribute::create_sensitivity_max(cluster, 0);
+        // if !per_zone_sensitivity, create sensitivity attribute
+        attribute::create_sensitivity(cluster, 0);
+
+        command::create_or_update_trigger(cluster);
+        command::create_remove_trigger(cluster);
+
+        /* Events */
+        event::create_zone_triggered(cluster);
+        event::create_zone_stopped(cluster);
+    }
+
+    if (flags & CLUSTER_FLAG_CLIENT) {
+        create_default_binding_cluster(endpoint);
+    }
+    return cluster;
+}
+
+} /* zone_management */
 
 } /* cluster */
 } /* esp_matter */
