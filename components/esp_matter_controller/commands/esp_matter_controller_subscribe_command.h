@@ -46,7 +46,7 @@ public:
                       ScopedMemoryBufferWithSize<EventPathParams> &&event_paths, uint16_t min_interval,
                       uint16_t max_interval, bool auto_resubscribe = true, attribute_report_cb_t attribute_cb = nullptr,
                       event_report_cb_t event_cb = nullptr, subscription_established_cb_t established_cb = nullptr,
-                      subscription_terminated_cb_t terminated_cb = nullptr, subscribe_failure_cb_t connect_failure_cb = nullptr, 
+                      subscription_terminated_cb_t terminated_cb = nullptr, subscribe_failure_cb_t connect_failure_cb = nullptr,
                       bool keep_subscription = true)
         : m_node_id(node_id)
         , m_min_interval(min_interval)
@@ -66,12 +66,12 @@ public:
     {
     }
 
-    public:
+public:
     /** Constructor for command with multiple paths**/
     subscribe_command(uint64_t node_id, ScopedMemoryBufferWithSize<AttributePathParams> &&attr_paths,
                       ScopedMemoryBufferWithSize<EventPathParams> &&event_paths, uint16_t min_interval,
                       uint16_t max_interval, bool auto_resubscribe = true, attribute_report_cb_t attribute_cb = nullptr,
-                      event_report_cb_t event_cb = nullptr, subscription_terminated_cb_t terminated_cb = nullptr, 
+                      event_report_cb_t event_cb = nullptr, subscription_terminated_cb_t terminated_cb = nullptr,
                       subscribe_failure_cb_t connect_failure_cb = nullptr, bool keep_subscription = true)
         : m_node_id(node_id)
         , m_min_interval(min_interval)
@@ -98,7 +98,7 @@ public:
                       subscribe_command_type_t command_type, uint16_t min_interval, uint16_t max_interval,
                       bool auto_resubscribe = true, attribute_report_cb_t attribute_cb = nullptr,
                       event_report_cb_t event_cb = nullptr, subscription_established_cb_t established_cb = nullptr,
-                      subscription_terminated_cb_t terminated_cb = nullptr, subscribe_failure_cb_t connect_failure_cb = nullptr, 
+                      subscription_terminated_cb_t terminated_cb = nullptr, subscribe_failure_cb_t connect_failure_cb = nullptr,
                       bool keep_subscription = true)
         : m_node_id(node_id)
         , m_min_interval(min_interval)
@@ -134,7 +134,7 @@ public:
     subscribe_command(uint64_t node_id, uint16_t endpoint_id, uint32_t cluster_id, uint32_t attribute_or_event_id,
                       subscribe_command_type_t command_type, uint16_t min_interval, uint16_t max_interval,
                       bool auto_resubscribe = true, attribute_report_cb_t attribute_cb = nullptr,
-                      event_report_cb_t event_cb = nullptr, subscription_terminated_cb_t terminated_cb = nullptr, 
+                      event_report_cb_t event_cb = nullptr, subscription_terminated_cb_t terminated_cb = nullptr,
                       subscribe_failure_cb_t connect_failure_cb = nullptr, bool keep_subscription = true)
         : m_node_id(node_id)
         , m_min_interval(min_interval)
