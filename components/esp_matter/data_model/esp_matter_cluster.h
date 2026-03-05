@@ -26,21 +26,6 @@
 namespace esp_matter {
 namespace cluster {
 
-/** Common cluster plugin init callback
- *
- * This is the common plugin init callback which calls the plugin init callbacks in the clusters.
- *
- * This common API has been added so that the specific APIs in zap-generated/PluginApplicationCallbacks.h can be
- * removed.
- */
-void plugin_init_callback_common();
-
-/** Common cluster add bounds callback
- *
- * This is the common add bounds callback which set the bounds to all the attributes of the clusters.
- */
-void add_bounds_callback_common();
-
 /** Specific cluster create APIs
  *
  * These APIs also create the mandatory attributes and commands for the cluster. If the mandatory attribute is not
@@ -223,7 +208,7 @@ typedef struct config {
         feature::replaceable::config_t replaceable;
     } features;
     uint32_t feature_flags;
-	config() : status(0), order(0), description{0}, feature_flags(0) {}
+    config() : status(0), order(0), description{0}, feature_flags(0) {}
 } config_t;
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 } /* power_source */
@@ -296,7 +281,7 @@ typedef struct config {
     uint16_t color_capabilities;
     nullable<uint8_t> number_of_primaries;
     config() : color_mode(1), color_control_options(0), enhanced_color_mode(1),
-               color_capabilities(0), number_of_primaries(0) {}
+        color_capabilities(0), number_of_primaries(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
@@ -585,7 +570,7 @@ typedef struct config {
     uint8_t occupancy_sensor_type_bitmap;
     uint32_t feature_flags;
     config() : occupancy(0), occupancy_sensor_type(0),
-               occupancy_sensor_type_bitmap(0), feature_flags(0) {}
+        occupancy_sensor_type_bitmap(0), feature_flags(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
@@ -857,7 +842,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 namespace device_energy_management {
 typedef struct config {
     void *delegate;
-    config() : delegate(nullptr) {}
+    uint32_t feature_flags;
+    config() : delegate(nullptr), feature_flags(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
@@ -984,7 +970,6 @@ using config_t = common::config_t;
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 }/*webrtc transport requestor*/
 
-
 namespace chime {
 typedef struct config {
     void *delegate;
@@ -1076,6 +1061,12 @@ using config_t = common::config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 } /* soil_measurement */
+
+namespace zone_management {
+using config_t = common::config_t;
+
+cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
+} /* zone_management */
 
 } /* cluster */
 } /* esp_matter */

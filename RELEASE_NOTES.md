@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 # 21-Feb-2026
 ### API Changes
 - In `subscribe_command`, `subscribe_done_cb_t` has been renamed to `subscribe_terminated_cb_t` to align better with the terminology.
@@ -9,7 +7,6 @@
 ### API Changes
 - Removed APIs: `plugin_init_callback_common()`, `add_bounds_callback_common()` and `delegate_init_callback_common()`.
 
->>>>>>> 7028fcc2 (Update RELEASE_NOTES.md for API changes in `subscribe_command`)
 # 27-Nov-2025
 ### Feature: attribute::get_val() and attribute::set_val() APIs
 

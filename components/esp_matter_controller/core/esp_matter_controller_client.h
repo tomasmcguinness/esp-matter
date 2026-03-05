@@ -35,13 +35,13 @@
 #include <lib/core/CHIPError.h>
 #include <lib/core/CHIPPersistentStorageDelegate.h>
 #include <lib/core/DataModelTypes.h>
+#include <lib/support/CodeUtils.h>
 #include <lib/support/Span.h>
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/KeyValueStoreManager.h>
 #include <platform/PlatformManager.h>
 #include <stdint.h>
 #include <transport/TransportMgr.h>
-#include "support/CodeUtils.h"
 
 #if CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY
 #include <controller/CommissionerDiscoveryController.h>
@@ -73,7 +73,9 @@ public:
     auto_fabric_remover(chip::Controller::DeviceController *controller, remove_fabric_callback callback)
         : chip::Controller::CurrentFabricRemover(controller)
         , m_matter_callback(on_remove_current_fabric, this)
-        , m_remove_fabric_callback(callback) {}
+        , m_remove_fabric_callback(callback)
+    {
+    }
 
 private:
     static void on_remove_current_fabric(void *context, chip::NodeId remote_node, CHIP_ERROR status)
@@ -86,6 +88,42 @@ private:
     }
     chip::Callback::Callback<chip::Controller::OnCurrentFabricRemove> m_matter_callback;
     remove_fabric_callback m_remove_fabric_callback;
+};
+
+class controller_check_in_delegate : public chip::app::DefaultCheckInDelegate {
+public:
+    using check_in_complete_callback = void (*)(const chip::app::ICDClientInfo &clientInfo);
+    using key_refresh_done_callback = void (*)(const chip::app::RefreshKeySender *refreshKeySender, CHIP_ERROR error);
+    CHIP_ERROR Init(chip::app::ICDClientStorage *storage, chip::app::InteractionModelEngine *engine)
+    {
+        return chip::app::DefaultCheckInDelegate::Init(storage, engine);
+    }
+
+    void SetICDDelegateCallback(check_in_complete_callback check_in_complete_cb,
+                                key_refresh_done_callback key_refresh_done_cb)
+    {
+        m_check_in_complete_cb = check_in_complete_cb;
+        m_key_refresh_done_cb = key_refresh_done_cb;
+    }
+
+    void OnCheckInComplete(const chip::app::ICDClientInfo &clientInfo) override
+    {
+        if (m_check_in_complete_cb) {
+            m_check_in_complete_cb(clientInfo);
+        }
+    }
+
+    void OnKeyRefreshDone(chip::app::RefreshKeySender *refreshKeySender, CHIP_ERROR error) override
+    {
+        if (m_key_refresh_done_cb) {
+            m_key_refresh_done_cb(refreshKeySender, error);
+        }
+        chip::app::DefaultCheckInDelegate::OnKeyRefreshDone(refreshKeySender, error);
+    }
+
+private:
+    check_in_complete_callback m_check_in_complete_cb;
+    key_refresh_done_callback m_key_refresh_done_cb;
 };
 
 class matter_controller_client {
@@ -132,21 +170,38 @@ public:
     }
 
     esp_err_t init(NodeId node_id, FabricId fabric_id, uint16_t listen_port);
-    chip::app::DefaultICDClientStorage &get_icd_client_storage() { return m_icd_client_storage; }
+    chip::app::DefaultICDClientStorage &get_icd_client_storage()
+    {
+        return m_icd_client_storage;
+    }
+    void set_icd_client_callback(controller_check_in_delegate::check_in_complete_callback check_in_complete_cb,
+                                 controller_check_in_delegate::key_refresh_done_callback key_refresh_done_cb)
+    {
+        m_icd_check_in_delegate.SetICDDelegateCallback(check_in_complete_cb, key_refresh_done_cb);
+    }
 
 #ifdef CONFIG_ESP_MATTER_COMMISSIONER_ENABLE
     esp_err_t setup_commissioner();
-    MatterDeviceCommissioner *get_commissioner() { return &m_device_commissioner; }
+    MatterDeviceCommissioner *get_commissioner()
+    {
+        return &m_device_commissioner;
+    }
     esp_err_t unpair(NodeId remote_node, remove_fabric_callback callback = nullptr)
     {
         return auto_fabric_remover::remove_fabric(&m_device_commissioner, remote_node, callback);
     }
 #if CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY
-    CommissionerDiscoveryController *get_discovery_controller() { return &m_commissioner_discovery_controller; }
+    CommissionerDiscoveryController *get_discovery_controller()
+    {
+        return &m_commissioner_discovery_controller;
+    }
 #endif
 #else
     esp_err_t setup_controller(chip::MutableByteSpan &ipk);
-    MatterDeviceController *get_controller() { return &m_device_controller; }
+    MatterDeviceController *get_controller()
+    {
+        return &m_device_controller;
+    }
 #endif
     chip::FabricIndex get_fabric_index()
     {
@@ -185,8 +240,8 @@ private:
             }
 
             if (mSystemState->TransportMgr()->MulticastGroupJoinLeave(
-                    chip::Transport::PeerAddress::Multicast(fabric->GetFabricId(), new_group.group_id), true) !=
-                CHIP_NO_ERROR) {
+                        chip::Transport::PeerAddress::Multicast(fabric->GetFabricId(), new_group.group_id), true) !=
+                    CHIP_NO_ERROR) {
                 ChipLogError(AppServer, "Unable to listen to group");
             }
         };
@@ -221,13 +276,13 @@ private:
     chip::Credentials::PersistentStorageOpCertStore m_operational_cert_store;
     chip::Crypto::RawKeySessionKeystore m_session_key_store;
     chip::Credentials::GroupDataProviderImpl m_group_data_provider{k_max_groups_per_fabric,
-                                                                   k_max_group_keys_per_fabric};
+             k_max_group_keys_per_fabric};
     GroupDataProviderListener m_group_data_provider_listener;
     credentials_issuer *m_credentials_issuer;
     NodeId m_controller_node_id;
     FabricId m_controller_fabric_id;
     chip::app::DefaultICDClientStorage m_icd_client_storage;
-    chip::app::DefaultCheckInDelegate m_icd_check_in_delegate;
+    controller_check_in_delegate m_icd_check_in_delegate;
     chip::app::CheckInHandler m_check_in_handler;
 
 #ifdef CONFIG_ESP_MATTER_COMMISSIONER_ENABLE
@@ -248,9 +303,9 @@ class ESPCommissionerCallback : public CommissionerCallback {
     {
         NodeId gRemoteId = chip::kTestDeviceNodeId;
         chip::RendezvousParameters params = chip::RendezvousParameters()
-                                                .SetSetupPINCode(pincode)
-                                                .SetDiscriminator(longDiscriminator)
-                                                .SetPeerAddress(peerAddress);
+                                            .SetSetupPINCode(pincode)
+                                            .SetDiscriminator(longDiscriminator)
+                                            .SetPeerAddress(peerAddress);
         do {
             chip::Crypto::DRBG_get_bytes(reinterpret_cast<uint8_t *>(&gRemoteId), sizeof(gRemoteId));
         } while (!chip::IsOperationalNodeId(gRemoteId));
