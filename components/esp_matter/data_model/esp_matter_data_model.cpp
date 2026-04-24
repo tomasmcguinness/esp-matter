@@ -94,7 +94,9 @@ typedef struct _cluster {
     const cluster::function_generic_t *functions;
     cluster::plugin_server_init_callback_t plugin_server_init_callback;
     cluster::delegate_init_callback_t delegate_init_callback;
+    cluster::delegate_shutdown_callback_t delegate_shutdown_callback;
     void *delegate_pointer;
+    void *delegate_managed_instance;
     cluster::add_bounds_callback_t add_bounds_callback;
     cluster::initialization_callback_t init_callback;
     cluster::shutdown_callback_t shutdown_callback;
@@ -1605,6 +1607,35 @@ delegate_init_callback_t get_delegate_init_callback(cluster_t *cluster)
     return current_cluster->delegate_init_callback;
 }
 
+esp_err_t set_delegate_shutdown_callback_and_managed_instance(cluster_t *cluster,
+                                                              delegate_shutdown_callback_t callback,
+                                                              void *instance)
+{
+    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG, ESP_LOGE(TAG, "Cluster cannot be NULL"));
+    _cluster_t *current_cluster = (_cluster_t *)cluster;
+    current_cluster->delegate_shutdown_callback = callback;
+    current_cluster->delegate_managed_instance = instance;
+    return ESP_OK;
+}
+
+void *get_delegate_managed_instance(cluster_t *cluster)
+{
+    VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Cluster cannot be NULL."));
+    _cluster_t *current_cluster = (_cluster_t *)cluster;
+    return current_cluster->delegate_managed_instance;
+}
+
+void delegate_shutdown(cluster_t *cluster, uint16_t endpoint_id)
+{
+    VerifyOrReturn(cluster);
+    _cluster_t *current_cluster = (_cluster_t *)cluster;
+    if (current_cluster->delegate_shutdown_callback && current_cluster->delegate_managed_instance) {
+        current_cluster->delegate_shutdown_callback(current_cluster->delegate_managed_instance, endpoint_id);
+    }
+    current_cluster->delegate_shutdown_callback = nullptr;
+    current_cluster->delegate_managed_instance = nullptr;
+}
+
 esp_err_t set_add_bounds_callback(cluster_t *cluster, add_bounds_callback_t callback)
 {
     VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG, ESP_LOGE(TAG, "Cluster cannot be NULL"));
@@ -1779,6 +1810,9 @@ esp_err_t destroy(node_t *node, endpoint_t *endpoint)
         cluster_t *cluster = cluster::get_first(endpoint);
         while (cluster) {
             /* TODO: kPermanentRemove type shutdown callback is not implemented yet in upstream code */
+
+            /* Release any heap instance allocated by the delegate init callback. */
+            cluster::delegate_shutdown(cluster, endpoint::get_id(endpoint));
 
             /* Shutdown function */
             uint8_t flags = cluster::get_flags(cluster);

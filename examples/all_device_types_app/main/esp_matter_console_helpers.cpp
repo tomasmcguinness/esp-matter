@@ -783,7 +783,8 @@ int create(uint8_t device_type_index)
         ESP_LOGE(TAG, "Matter create endpoint failed");
         return 1;
     } else {
-        ESP_LOGI(TAG, "%s created with endpoint_id %d", device_type_list[device_type_index - 1].device_name, endpoint::get_id(endpoint));
+        app_endpoint_id = endpoint::get_id(endpoint);
+        ESP_LOGI(TAG, "%s created with endpoint_id %d", device_type_list[device_type_index - 1].device_name, app_endpoint_id);
         if (esp_matter::nvs_helpers::get_device_type_from_nvs(&device_type_index) != ESP_OK) {
             err = esp_matter::nvs_helpers::set_device_type_in_nvs(device_type_index);
             if (err != ESP_OK) {

@@ -58,7 +58,6 @@
 #include <app/clusters/commodity-price-server/commodity-price-server.h>
 #include <app/clusters/electrical-grid-conditions-server/electrical-grid-conditions-server.h>
 #include <app/clusters/meter-identification-server/meter-identification-server.h>
-#include <unordered_map>
 
 #include <clusters/ota_software_update_provider/integration.h>
 #include <clusters/push_av_stream_transport/integration.h>
@@ -75,9 +74,6 @@
 using namespace chip::app::Clusters;
 namespace esp_matter {
 namespace cluster {
-
-static std::unordered_map<chip::EndpointId, ModeBase::Instance*> s_microwave_oven_mode_instances;
-static std::unordered_map<chip::EndpointId, OperationalState::Instance*> s_operational_state_instances;
 
 static uint32_t get_feature_map_value(uint16_t endpoint_id, uint32_t cluster_id)
 {
@@ -184,13 +180,23 @@ chip::BitMask<EnergyEvse::OptionalCommands> get_energy_evse_enabled_optional_com
 
 namespace delegate_cb {
 
+static void ModeBaseShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<ModeBase::Instance*>(managed_instance);
+}
+
 void InitModeDelegate(void *delegate, uint16_t endpoint_id, uint32_t cluster_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static ModeBase::Instance * modeInstance = nullptr;
-    ModeBase::Delegate *mode_delegate = static_cast<ModeBase::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, cluster_id);
-    modeInstance = new ModeBase::Instance(mode_delegate, endpoint_id, cluster_id, feature_map);
+    cluster_t *cl = cluster::get(endpoint_id, cluster_id);
+    VerifyOrReturn(cl != nullptr);
+    ModeBase::Instance *modeInstance = static_cast<ModeBase::Instance*>(get_delegate_managed_instance(cl));
+    if (!modeInstance) {
+        ModeBase::Delegate *mode_delegate = static_cast<ModeBase::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, cluster_id);
+        modeInstance = new ModeBase::Instance(mode_delegate, endpoint_id, cluster_id, feature_map);
+        set_delegate_shutdown_callback_and_managed_instance(cl, ModeBaseShutdownCB, modeInstance);
+    }
     (void)modeInstance->Init();
 }
 
@@ -231,87 +237,96 @@ void EnergyEvseModeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 
 void MicrowaveOvenModeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
-    VerifyOrReturn(delegate != nullptr);
-    ModeBase::Delegate *mode_delegate = static_cast<ModeBase::Delegate*>(delegate);
-    ModeBase::Instance * modeInstance = nullptr;
-    // Create new instance of MicrowaveOvenMode if not found in the map, otherwise use existing instance.
-    if (s_microwave_oven_mode_instances.find(endpoint_id) == s_microwave_oven_mode_instances.end()) {
-        uint32_t feature_map = get_feature_map_value(endpoint_id, MicrowaveOvenMode::Id);
-        modeInstance = new ModeBase::Instance(mode_delegate, endpoint_id, MicrowaveOvenMode::Id, feature_map);
-        s_microwave_oven_mode_instances[endpoint_id] = modeInstance;
-    } else {
-        modeInstance = s_microwave_oven_mode_instances[endpoint_id];
-    }
-    (void)modeInstance->Init();
+    InitModeDelegate(delegate, endpoint_id, MicrowaveOvenMode::Id);
 }
 
 void DeviceEnergyManagementModeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
-    ModeBase::Delegate *device_energy_management_mode_delegate = static_cast<ModeBase::Delegate*>(delegate);
-    InitModeDelegate(device_energy_management_mode_delegate, endpoint_id, DeviceEnergyManagementMode::Id);
+    InitModeDelegate(delegate, endpoint_id, DeviceEnergyManagementMode::Id);
+}
+
+static void EnergyEvseShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<EnergyEvse::Instance*>(managed_instance);
 }
 
 void EnergyEvseDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static EnergyEvse::Instance * energyEvseInstance = nullptr;
-    EnergyEvse::Delegate *energy_evse_delegate = static_cast<EnergyEvse::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, EnergyEvse::Id);
-    chip::BitMask<EnergyEvse::OptionalAttributes> optional_attrs = get_energy_evse_enabled_optional_attributes(endpoint_id);
-    chip::BitMask<EnergyEvse::OptionalCommands> optional_cmds = get_energy_evse_enabled_optional_commands(endpoint_id);
-    energyEvseInstance = new EnergyEvse::Instance(endpoint_id, *energy_evse_delegate, chip::BitMask<EnergyEvse::Feature>(feature_map),
-                                                  optional_attrs, optional_cmds);
+    cluster_t *cl = cluster::get(endpoint_id, EnergyEvse::Id);
+    VerifyOrReturn(cl != nullptr);
+    EnergyEvse::Instance *energyEvseInstance = static_cast<EnergyEvse::Instance*>(get_delegate_managed_instance(cl));
+    if (!energyEvseInstance) {
+        EnergyEvse::Delegate *energy_evse_delegate = static_cast<EnergyEvse::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, EnergyEvse::Id);
+        chip::BitMask<EnergyEvse::OptionalAttributes> optional_attrs = get_energy_evse_enabled_optional_attributes(endpoint_id);
+        chip::BitMask<EnergyEvse::OptionalCommands> optional_cmds = get_energy_evse_enabled_optional_commands(endpoint_id);
+        energyEvseInstance = new EnergyEvse::Instance(endpoint_id, *energy_evse_delegate, chip::BitMask<EnergyEvse::Feature, uint32_t>(feature_map),
+                                                      optional_attrs, optional_cmds);
+        set_delegate_shutdown_callback_and_managed_instance(cl, EnergyEvseShutdownCB, energyEvseInstance);
+    }
     (void)energyEvseInstance->Init();
+}
+
+static void MicrowaveOvenControlShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<MicrowaveOvenControl::Instance*>(managed_instance);
+}
+
+static void OperationalStateShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<OperationalState::Instance*>(managed_instance);
 }
 
 void MicrowaveOvenControlDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
-    // Get delegates of MicrowaveOvenMode and OperationalState clusters.
-    cluster_t *cluster = cluster::get(endpoint_id, MicrowaveOvenMode::Id);
-    ModeBase::Delegate *microwave_oven_mode_delegate = static_cast<ModeBase::Delegate*>(get_delegate_impl(cluster));
-    cluster = cluster::get(endpoint_id, OperationalState::Id);
-    OperationalState::Delegate *operational_state_delegate = static_cast<OperationalState::Delegate*>(get_delegate_impl(cluster));
-    VerifyOrReturn(delegate != nullptr && microwave_oven_mode_delegate != nullptr && operational_state_delegate != nullptr);
-    ModeBase::Instance* microwaveOvenModeInstance = nullptr;
-    OperationalState::Instance* operationalStateInstance = nullptr;
+    VerifyOrReturn(delegate != nullptr);
+    cluster_t *mom_cl = cluster::get(endpoint_id, MicrowaveOvenMode::Id);
+    cluster_t *os_cl = cluster::get(endpoint_id, OperationalState::Id);
+    cluster_t *moc_cl = cluster::get(endpoint_id, MicrowaveOvenControl::Id);
+    VerifyOrReturn(mom_cl != nullptr && os_cl != nullptr && moc_cl != nullptr);
 
-    // Create new instance of MicrowaveOvenMode if not found in the map, otherwise use existing instance.
-    if (s_microwave_oven_mode_instances.find(endpoint_id) == s_microwave_oven_mode_instances.end()) {
-        uint32_t feature_map = get_feature_map_value(endpoint_id, MicrowaveOvenMode::Id);
-        microwaveOvenModeInstance = new ModeBase::Instance(microwave_oven_mode_delegate, endpoint_id, MicrowaveOvenMode::Id, feature_map);
-        s_microwave_oven_mode_instances[endpoint_id] = microwaveOvenModeInstance;
-    } else {
-        microwaveOvenModeInstance = s_microwave_oven_mode_instances[endpoint_id];
+    ModeBase::Delegate *microwave_oven_mode_delegate = static_cast<ModeBase::Delegate*>(get_delegate_impl(mom_cl));
+    OperationalState::Delegate *operational_state_delegate = static_cast<OperationalState::Delegate*>(get_delegate_impl(os_cl));
+    VerifyOrReturn(microwave_oven_mode_delegate != nullptr && operational_state_delegate != nullptr);
+
+    // Ensure MicrowaveOvenMode instance exists on its cluster slot.
+    ModeBase::Instance *microwaveOvenModeInstance = static_cast<ModeBase::Instance*>(get_delegate_managed_instance(mom_cl));
+    if (!microwaveOvenModeInstance) {
+        uint32_t fm = get_feature_map_value(endpoint_id, MicrowaveOvenMode::Id);
+        microwaveOvenModeInstance = new ModeBase::Instance(microwave_oven_mode_delegate, endpoint_id, MicrowaveOvenMode::Id, fm);
+        set_delegate_shutdown_callback_and_managed_instance(mom_cl, ModeBaseShutdownCB, microwaveOvenModeInstance);
     }
 
-    // Create new instance of OperationalState if not found in the map, otherwise use existing instance.
-    if (s_operational_state_instances.find(endpoint_id) == s_operational_state_instances.end()) {
+    // Ensure OperationalState instance exists on its cluster slot.
+    OperationalState::Instance *operationalStateInstance = static_cast<OperationalState::Instance*>(get_delegate_managed_instance(os_cl));
+    if (!operationalStateInstance) {
         operationalStateInstance = new OperationalState::Instance(operational_state_delegate, endpoint_id);
-        s_operational_state_instances[endpoint_id] = operationalStateInstance;
-    } else {
-        operationalStateInstance = s_operational_state_instances[endpoint_id];
+        set_delegate_shutdown_callback_and_managed_instance(os_cl, OperationalStateShutdownCB, operationalStateInstance);
     }
 
-    // Create MicrowaveOvenControl instance
-    static MicrowaveOvenControl::Instance * microwaveOvenControlInstance = nullptr;
-    MicrowaveOvenControl::Delegate *microwave_oven_control_delegate = static_cast<MicrowaveOvenControl::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, MicrowaveOvenControl::Id);
-    microwaveOvenControlInstance = new MicrowaveOvenControl::Instance(microwave_oven_control_delegate, endpoint_id, MicrowaveOvenControl::Id, feature_map,
-                                                                      *operationalStateInstance, *microwaveOvenModeInstance);
+    // MicrowaveOvenControl instance.
+    MicrowaveOvenControl::Instance *microwaveOvenControlInstance = static_cast<MicrowaveOvenControl::Instance*>(get_delegate_managed_instance(moc_cl));
+    if (!microwaveOvenControlInstance) {
+        MicrowaveOvenControl::Delegate *microwave_oven_control_delegate = static_cast<MicrowaveOvenControl::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, MicrowaveOvenControl::Id);
+        microwaveOvenControlInstance = new MicrowaveOvenControl::Instance(microwave_oven_control_delegate, endpoint_id, MicrowaveOvenControl::Id, feature_map,
+                                                                          *operationalStateInstance, *microwaveOvenModeInstance);
+        set_delegate_shutdown_callback_and_managed_instance(moc_cl, MicrowaveOvenControlShutdownCB, microwaveOvenControlInstance);
+    }
     (void)microwaveOvenControlInstance->Init();
 }
 
 void OperationalStateDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static OperationalState::Instance * operationalStateInstance = nullptr;
-    OperationalState::Delegate *operational_state_delegate = static_cast<OperationalState::Delegate*>(delegate);
-    // Create new instance of OperationalState if not found in the map, otherwise use existing instance.
-    if (s_operational_state_instances.find(endpoint_id) == s_operational_state_instances.end()) {
+    cluster_t *cl = cluster::get(endpoint_id, OperationalState::Id);
+    VerifyOrReturn(cl != nullptr);
+    OperationalState::Instance *operationalStateInstance = static_cast<OperationalState::Instance*>(get_delegate_managed_instance(cl));
+    if (!operationalStateInstance) {
+        OperationalState::Delegate *operational_state_delegate = static_cast<OperationalState::Delegate*>(delegate);
         operationalStateInstance = new OperationalState::Instance(operational_state_delegate, endpoint_id);
-        s_operational_state_instances[endpoint_id] = operationalStateInstance;
-    } else {
-        operationalStateInstance = s_operational_state_instances[endpoint_id];
+        set_delegate_shutdown_callback_and_managed_instance(cl, OperationalStateShutdownCB, operationalStateInstance);
     }
     (void)operationalStateInstance->Init();
 }
@@ -353,13 +368,23 @@ void ValveConfigurationAndControlDelegateInitCB(void *delegate, uint16_t endpoin
     ValveConfigurationAndControl::SetDefaultDelegate(endpoint_id, valve_configuration_and_control_delegate);
 }
 
+static void DeviceEnergyManagementShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<DeviceEnergyManagement::Instance*>(managed_instance);
+}
+
 void DeviceEnergyManagementDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static DeviceEnergyManagement::Instance * deviceEnergyManagementInstance = nullptr;
-    DeviceEnergyManagement::Delegate *device_energy_management_delegate = static_cast<DeviceEnergyManagement::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, DeviceEnergyManagement::Id);
-    deviceEnergyManagementInstance = new DeviceEnergyManagement::Instance(endpoint_id, *device_energy_management_delegate, chip::BitMask<DeviceEnergyManagement::Feature, uint32_t>(feature_map));
+    cluster_t *cl = cluster::get(endpoint_id, DeviceEnergyManagement::Id);
+    VerifyOrReturn(cl != nullptr);
+    DeviceEnergyManagement::Instance *deviceEnergyManagementInstance = static_cast<DeviceEnergyManagement::Instance*>(get_delegate_managed_instance(cl));
+    if (!deviceEnergyManagementInstance) {
+        DeviceEnergyManagement::Delegate *device_energy_management_delegate = static_cast<DeviceEnergyManagement::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, DeviceEnergyManagement::Id);
+        deviceEnergyManagementInstance = new DeviceEnergyManagement::Instance(endpoint_id, *device_energy_management_delegate, chip::BitMask<DeviceEnergyManagement::Feature, uint32_t>(feature_map));
+        set_delegate_shutdown_callback_and_managed_instance(cl, DeviceEnergyManagementShutdownCB, deviceEnergyManagementInstance);
+    }
     (void)deviceEnergyManagementInstance->Init();
 }
 
@@ -391,25 +416,45 @@ void ApplicationBasicDelegateInitCB(void *delegate, uint16_t endpoint_id)
     ApplicationBasic::SetDefaultDelegate(endpoint_id, application_basic_delegate);
 }
 
+static void PowerTopologyShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<PowerTopology::Instance*>(managed_instance);
+}
+
 void PowerTopologyDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static PowerTopology::Instance * powerTopologyInstance = nullptr;
-    PowerTopology::Delegate *power_topology_delegate = static_cast<PowerTopology::Delegate*>(delegate);
-    chip::BitMask<PowerTopology::Feature> feature_map(get_feature_map_value(endpoint_id, PowerTopology::Id));
-    powerTopologyInstance = new PowerTopology::Instance(endpoint_id, *power_topology_delegate, feature_map);
+    cluster_t *cl = cluster::get(endpoint_id, PowerTopology::Id);
+    VerifyOrReturn(cl != nullptr);
+    PowerTopology::Instance *powerTopologyInstance = static_cast<PowerTopology::Instance*>(get_delegate_managed_instance(cl));
+    if (!powerTopologyInstance) {
+        PowerTopology::Delegate *power_topology_delegate = static_cast<PowerTopology::Delegate*>(delegate);
+        chip::BitMask<PowerTopology::Feature> feature_map(get_feature_map_value(endpoint_id, PowerTopology::Id));
+        powerTopologyInstance = new PowerTopology::Instance(endpoint_id, *power_topology_delegate, feature_map);
+        set_delegate_shutdown_callback_and_managed_instance(cl, PowerTopologyShutdownCB, powerTopologyInstance);
+    }
     (void)powerTopologyInstance->Init();
+}
+
+static void ElectricalPowerMeasurementShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<ElectricalPowerMeasurement::Instance*>(managed_instance);
 }
 
 void ElectricalPowerMeasurementDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static ElectricalPowerMeasurement::Instance * electricalPowerMeasurementInstance = nullptr;
-    ElectricalPowerMeasurement::Delegate *electrical_power_measurement_delegate = static_cast<ElectricalPowerMeasurement::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, ElectricalPowerMeasurement::Id);
-    chip::BitMask<ElectricalPowerMeasurement::OptionalAttributes> optional_attrs = get_electrical_power_measurement_enabled_optional_attributes(endpoint_id);
-    electricalPowerMeasurementInstance = new ElectricalPowerMeasurement::Instance(endpoint_id, *electrical_power_measurement_delegate,
-                                                                                  chip::BitMask<ElectricalPowerMeasurement::Feature, uint32_t>(feature_map), optional_attrs);
+    cluster_t *cl = cluster::get(endpoint_id, ElectricalPowerMeasurement::Id);
+    VerifyOrReturn(cl != nullptr);
+    ElectricalPowerMeasurement::Instance *electricalPowerMeasurementInstance = static_cast<ElectricalPowerMeasurement::Instance*>(get_delegate_managed_instance(cl));
+    if (!electricalPowerMeasurementInstance) {
+        ElectricalPowerMeasurement::Delegate *electrical_power_measurement_delegate = static_cast<ElectricalPowerMeasurement::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, ElectricalPowerMeasurement::Id);
+        chip::BitMask<ElectricalPowerMeasurement::OptionalAttributes> optional_attrs = get_electrical_power_measurement_enabled_optional_attributes(endpoint_id);
+        electricalPowerMeasurementInstance = new ElectricalPowerMeasurement::Instance(endpoint_id, *electrical_power_measurement_delegate,
+                                                                                      chip::BitMask<ElectricalPowerMeasurement::Feature, uint32_t>(feature_map), optional_attrs);
+        set_delegate_shutdown_callback_and_managed_instance(cl, ElectricalPowerMeasurementShutdownCB, electricalPowerMeasurementInstance);
+    }
     (void)electricalPowerMeasurementInstance->Init();
 }
 
@@ -448,20 +493,31 @@ void ModeSelectDelegateInitCB(void *delegate, uint16_t endpoint_id)
     ModeSelect::setSupportedModesManager(supported_modes_manager);
 }
 
+static void ThreadBorderRouterManagementShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    chip::Platform::Delete(static_cast<ThreadBorderRouterManagement::ServerInstance*>(managed_instance));
+}
+
 void ThreadBorderRouterManagementDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     assert(delegate != nullptr);
-    /* Get the attribute */
-    attribute_t *attribute = attribute::get(endpoint_id, ThreadBorderRouterManagement::Id, Globals::Attributes::FeatureMap::Id);
-    assert(attribute != nullptr);
-    /* Update the value if the attribute already exists */
-    esp_matter_attr_val_t val = esp_matter_invalid(nullptr);
-    attribute::get_val(attribute, &val);
-    bool pan_change_supported = (val.val.u32 & thread_border_router_management::feature::pan_change::get_id()) ? true : false;
-    ThreadBorderRouterManagement::Delegate *thread_br_delegate = static_cast<ThreadBorderRouterManagement::Delegate *>(delegate);
-    assert(thread_br_delegate->GetPanChangeSupported() == pan_change_supported);
+    cluster_t *cl = cluster::get(endpoint_id, ThreadBorderRouterManagement::Id);
+    VerifyOrReturn(cl != nullptr);
     ThreadBorderRouterManagement::ServerInstance *server_instance =
-        chip::Platform::New<ThreadBorderRouterManagement::ServerInstance>(endpoint_id, thread_br_delegate, chip::Server::GetInstance().GetFailSafeContext());
+        static_cast<ThreadBorderRouterManagement::ServerInstance*>(get_delegate_managed_instance(cl));
+    if (!server_instance) {
+        /* Get the attribute */
+        attribute_t *attribute = attribute::get(endpoint_id, ThreadBorderRouterManagement::Id, Globals::Attributes::FeatureMap::Id);
+        assert(attribute != nullptr);
+        /* Update the value if the attribute already exists */
+        esp_matter_attr_val_t val = esp_matter_invalid(nullptr);
+        attribute::get_val(attribute, &val);
+        bool pan_change_supported = (val.val.u32 & thread_border_router_management::feature::pan_change::get_id()) ? true : false;
+        ThreadBorderRouterManagement::Delegate *thread_br_delegate = static_cast<ThreadBorderRouterManagement::Delegate *>(delegate);
+        assert(thread_br_delegate->GetPanChangeSupported() == pan_change_supported);
+        server_instance = chip::Platform::New<ThreadBorderRouterManagement::ServerInstance>(endpoint_id, thread_br_delegate, chip::Server::GetInstance().GetFailSafeContext());
+        set_delegate_shutdown_callback_and_managed_instance(cl, ThreadBorderRouterManagementShutdownCB, server_instance);
+    }
     (void)server_instance->Init();
 }
 
@@ -470,15 +526,25 @@ void ServiceAreaDelegateInitCB(void *delegate, uint16_t endpoint_id)
     // TODO: This cluster has two delegates. We need to update existing delegate logic to accommodate multiple delegates.
 }
 
+static void WaterHeaterManagementShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<WaterHeaterManagement::Instance*>(managed_instance);
+}
+
 void WaterHeaterManagementDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     if (delegate == nullptr) {
         return;
     }
-    static WaterHeaterManagement::Instance * wHtrInstance = nullptr;
-    WaterHeaterManagement::Delegate *whtr_delegate = static_cast<WaterHeaterManagement::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, WaterHeaterManagement::Id);
-    wHtrInstance = new WaterHeaterManagement::Instance(endpoint_id, *whtr_delegate, chip::BitMask<WaterHeaterManagement::Feature, uint32_t>(feature_map));
+    cluster_t *cl = cluster::get(endpoint_id, WaterHeaterManagement::Id);
+    VerifyOrReturn(cl != nullptr);
+    WaterHeaterManagement::Instance *wHtrInstance = static_cast<WaterHeaterManagement::Instance*>(get_delegate_managed_instance(cl));
+    if (!wHtrInstance) {
+        WaterHeaterManagement::Delegate *whtr_delegate = static_cast<WaterHeaterManagement::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, WaterHeaterManagement::Id);
+        wHtrInstance = new WaterHeaterManagement::Instance(endpoint_id, *whtr_delegate, chip::BitMask<WaterHeaterManagement::Feature, uint32_t>(feature_map));
+        set_delegate_shutdown_callback_and_managed_instance(cl, WaterHeaterManagementShutdownCB, wHtrInstance);
+    }
     (void)wHtrInstance->Init();
 }
 
@@ -491,24 +557,45 @@ void EnergyPreferenceDelegateInitCB(void *delegate, uint16_t endpoint_id)
     EnergyPreference::SetDelegate(energy_preference_delegate);
 }
 
+static void CommissionerControlShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<CommissionerControl::CommissionerControlServer*>(managed_instance);
+}
+
 void CommissionerControlDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     if (delegate == nullptr) {
         return;
     }
-    CommissionerControl::Delegate *commissioner_control_delegate = static_cast<CommissionerControl::Delegate*>(delegate);
-    CommissionerControl::CommissionerControlServer *commissioner_control_instance = nullptr;
-    commissioner_control_instance =
-        new CommissionerControl::CommissionerControlServer(commissioner_control_delegate, endpoint_id);
+    cluster_t *cl = cluster::get(endpoint_id, CommissionerControl::Id);
+    VerifyOrReturn(cl != nullptr);
+    CommissionerControl::CommissionerControlServer *commissioner_control_instance =
+        static_cast<CommissionerControl::CommissionerControlServer*>(get_delegate_managed_instance(cl));
+    if (!commissioner_control_instance) {
+        CommissionerControl::Delegate *commissioner_control_delegate = static_cast<CommissionerControl::Delegate*>(delegate);
+        commissioner_control_instance =
+            new CommissionerControl::CommissionerControlServer(commissioner_control_delegate, endpoint_id);
+        set_delegate_shutdown_callback_and_managed_instance(cl, CommissionerControlShutdownCB, commissioner_control_instance);
+    }
     (void)commissioner_control_instance->Init();
+}
+
+static void ActionsShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<Actions::ActionsServer*>(managed_instance);
 }
 
 void ActionsDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    static Actions::ActionsServer *actionsServer = nullptr;
-    Actions::Delegate *actions_delegate = static_cast<Actions::Delegate*>(delegate);
-    actionsServer = new Actions::ActionsServer(endpoint_id, *actions_delegate);
+    cluster_t *cl = cluster::get(endpoint_id, Actions::Id);
+    VerifyOrReturn(cl != nullptr);
+    Actions::ActionsServer *actionsServer = static_cast<Actions::ActionsServer*>(get_delegate_managed_instance(cl));
+    if (!actionsServer) {
+        Actions::Delegate *actions_delegate = static_cast<Actions::Delegate*>(delegate);
+        actionsServer = new Actions::ActionsServer(endpoint_id, *actions_delegate);
+        set_delegate_shutdown_callback_and_managed_instance(cl, ActionsShutdownCB, actionsServer);
+    }
     (void)actionsServer->Init();
 }
 
@@ -539,31 +626,63 @@ void DiagnosticLogsDelegateInitCB(void *delegate, uint16_t endpoint_id)
     DiagnosticLogs::SetDiagnosticLogsProviderDelegate(diagnostic_logs_delegate);
 }
 
+static void ChimeShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<Chime::ChimeServer*>(managed_instance);
+}
+
 void ChimeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    ChimeDelegate *chime_delegate = static_cast<ChimeDelegate*>(delegate);
-    Chime::ChimeServer *chime_server = new Chime::ChimeServer(endpoint_id, *chime_delegate);
+    cluster_t *cl = cluster::get(endpoint_id, Chime::Id);
+    VerifyOrReturn(cl != nullptr);
+    Chime::ChimeServer *chime_server = static_cast<Chime::ChimeServer*>(get_delegate_managed_instance(cl));
+    if (!chime_server) {
+        ChimeDelegate *chime_delegate = static_cast<ChimeDelegate*>(delegate);
+        chime_server = new Chime::ChimeServer(endpoint_id, *chime_delegate);
+        set_delegate_shutdown_callback_and_managed_instance(cl, ChimeShutdownCB, chime_server);
+    }
     (void)chime_server->Init();
 }
 
 void ClosureControlDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    chip::app::Clusters::ClosureControl::MatterClosureControlSetDelegate(
-        static_cast<chip::EndpointId>(endpoint_id),
-        *static_cast<chip::app::Clusters::ClosureControl::ClosureControlClusterDelegate *>(delegate));
+    auto *cc_delegate = static_cast<ClosureControl::ClosureControlClusterDelegate*>(delegate);
+    ClosureControl::MatterClosureControlSetDelegate(static_cast<chip::EndpointId>(endpoint_id), *cc_delegate);
+    // Cluster instance lifecycle is owned by ESPMatterClosureControlClusterServer{Init,Shutdown}Callback
+    // (see data_model_provider/clusters/closure_control/integration.cpp), wired via
+    // set_init_and_shutdown_callbacks() on the generated cluster.
+}
+
+struct ClosureDimensionBundle {
+    ClosureDimension::MatterContext *context;
+    ClosureDimension::Interface *interface;
+};
+
+static void ClosureDimensionShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    ClosureDimensionBundle *bundle = static_cast<ClosureDimensionBundle*>(managed_instance);
+    (void)bundle->interface->Shutdown();
+    delete bundle->interface;
+    delete bundle->context;
+    delete bundle;
 }
 
 void ClosureDimensionDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    ClosureDimension::DelegateBase *closure_dimension_delegate = static_cast<ClosureDimension::DelegateBase *>(delegate);
-    auto ep = static_cast<chip::EndpointId>(endpoint_id);
-    ClosureDimension::MatterContext *matter_context = new ClosureDimension::MatterContext(ep);
-    ClosureDimension::Interface *server_interface =
-        new ClosureDimension::Interface(ep, *closure_dimension_delegate, *matter_context);
-    (void) server_interface->Init();
+    cluster_t *cl = cluster::get(endpoint_id, ClosureDimension::Id);
+    VerifyOrReturn(cl != nullptr);
+    ClosureDimensionBundle *bundle = static_cast<ClosureDimensionBundle*>(get_delegate_managed_instance(cl));
+    if (!bundle) {
+        auto *cd_delegate = static_cast<ClosureDimension::DelegateBase*>(delegate);
+        bundle = new ClosureDimensionBundle();
+        bundle->context = new ClosureDimension::MatterContext(endpoint_id);
+        bundle->interface = new ClosureDimension::Interface(endpoint_id, *cd_delegate, *bundle->context);
+        set_delegate_shutdown_callback_and_managed_instance(cl, ClosureDimensionShutdownCB, bundle);
+    }
+    (void)bundle->interface->Init();
 }
 
 void PushAvStreamTransportDelegateInitCB(void *delegate, uint16_t endpoint_id)
@@ -573,38 +692,82 @@ void PushAvStreamTransportDelegateInitCB(void *delegate, uint16_t endpoint_id)
     chip::app::Clusters::PushAvStreamTransport::SetDelegate(endpoint_id, push_av_stream_transport_delegate);
 }
 
+static void CommodityTariffShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<CommodityTariff::Instance*>(managed_instance);
+}
+
 void CommodityTariffDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    CommodityTariff::Delegate *commodity_tariff_delegate = static_cast<CommodityTariff::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, CommodityTariff::Id);
-    CommodityTariff::Instance *commodity_tariff_instance = new CommodityTariff::Instance(endpoint_id, *commodity_tariff_delegate, chip::BitMask<CommodityTariff::Feature, uint32_t>(feature_map));
+    cluster_t *cl = cluster::get(endpoint_id, CommodityTariff::Id);
+    VerifyOrReturn(cl != nullptr);
+    CommodityTariff::Instance *commodity_tariff_instance = static_cast<CommodityTariff::Instance*>(get_delegate_managed_instance(cl));
+    if (!commodity_tariff_instance) {
+        CommodityTariff::Delegate *commodity_tariff_delegate = static_cast<CommodityTariff::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, CommodityTariff::Id);
+        commodity_tariff_instance = new CommodityTariff::Instance(endpoint_id, *commodity_tariff_delegate, chip::BitMask<CommodityTariff::Feature, uint32_t>(feature_map));
+        set_delegate_shutdown_callback_and_managed_instance(cl, CommodityTariffShutdownCB, commodity_tariff_instance);
+    }
     (void)commodity_tariff_instance->Init();
+}
+
+static void CommodityPriceShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<CommodityPrice::Instance*>(managed_instance);
 }
 
 void CommodityPriceDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    CommodityPrice::Delegate *commodity_price_delegate = static_cast<CommodityPrice::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, CommodityPrice::Id);
-    CommodityPrice::Instance *commodity_price_instance = new CommodityPrice::Instance(endpoint_id, *commodity_price_delegate, chip::BitMask<CommodityPrice::Feature, uint32_t>(feature_map));
+    cluster_t *cl = cluster::get(endpoint_id, CommodityPrice::Id);
+    VerifyOrReturn(cl != nullptr);
+    CommodityPrice::Instance *commodity_price_instance = static_cast<CommodityPrice::Instance*>(get_delegate_managed_instance(cl));
+    if (!commodity_price_instance) {
+        CommodityPrice::Delegate *commodity_price_delegate = static_cast<CommodityPrice::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, CommodityPrice::Id);
+        commodity_price_instance = new CommodityPrice::Instance(endpoint_id, *commodity_price_delegate, chip::BitMask<CommodityPrice::Feature, uint32_t>(feature_map));
+        set_delegate_shutdown_callback_and_managed_instance(cl, CommodityPriceShutdownCB, commodity_price_instance);
+    }
     (void)commodity_price_instance->Init();
+}
+
+static void ElectricalGridConditionsShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<ElectricalGridConditions::Instance*>(managed_instance);
 }
 
 void ElectricalGridConditionsDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    ElectricalGridConditions::Delegate *electrical_grid_conditions_delegate = static_cast<ElectricalGridConditions::Delegate*>(delegate);
-    uint32_t feature_map = get_feature_map_value(endpoint_id, ElectricalGridConditions::Id);
-    ElectricalGridConditions::Instance *electrical_grid_conditions_instance = new ElectricalGridConditions::Instance(endpoint_id, *electrical_grid_conditions_delegate, chip::BitMask<ElectricalGridConditions::Feature, uint32_t>(feature_map));
+    cluster_t *cl = cluster::get(endpoint_id, ElectricalGridConditions::Id);
+    VerifyOrReturn(cl != nullptr);
+    ElectricalGridConditions::Instance *electrical_grid_conditions_instance = static_cast<ElectricalGridConditions::Instance*>(get_delegate_managed_instance(cl));
+    if (!electrical_grid_conditions_instance) {
+        ElectricalGridConditions::Delegate *electrical_grid_conditions_delegate = static_cast<ElectricalGridConditions::Delegate*>(delegate);
+        uint32_t feature_map = get_feature_map_value(endpoint_id, ElectricalGridConditions::Id);
+        electrical_grid_conditions_instance = new ElectricalGridConditions::Instance(endpoint_id, *electrical_grid_conditions_delegate, chip::BitMask<ElectricalGridConditions::Feature, uint32_t>(feature_map));
+        set_delegate_shutdown_callback_and_managed_instance(cl, ElectricalGridConditionsShutdownCB, electrical_grid_conditions_instance);
+    }
     (void)electrical_grid_conditions_instance->Init();
+}
+
+static void MeterIdentificationShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<MeterIdentification::Instance*>(managed_instance);
 }
 
 /* Not a delegate but an Initialization callback */
 void MeterIdentificationDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
-    uint32_t feature_map = get_feature_map_value(endpoint_id, MeterIdentification::Id);
-    MeterIdentification::Instance *meter_identification_instance = new MeterIdentification::Instance(endpoint_id, chip::BitMask<MeterIdentification::Feature, uint32_t>(feature_map));
+    cluster_t *cl = cluster::get(endpoint_id, MeterIdentification::Id);
+    VerifyOrReturn(cl != nullptr);
+    MeterIdentification::Instance *meter_identification_instance = static_cast<MeterIdentification::Instance*>(get_delegate_managed_instance(cl));
+    if (!meter_identification_instance) {
+        uint32_t feature_map = get_feature_map_value(endpoint_id, MeterIdentification::Id);
+        meter_identification_instance = new MeterIdentification::Instance(endpoint_id, chip::BitMask<MeterIdentification::Feature, uint32_t>(feature_map));
+        set_delegate_shutdown_callback_and_managed_instance(cl, MeterIdentificationShutdownCB, meter_identification_instance);
+    }
     LogErrorOnFailure(meter_identification_instance->Init());
 }
 
@@ -676,33 +839,46 @@ void OvenModeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     InitModeDelegate(delegate, endpoint_id, OvenMode::Id);
 }
+
+static void OvenCavityOperationalStateShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<OvenCavityOperationalState::Instance*>(managed_instance);
+}
+
 void OvenCavityOperationalStateDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    OperationalState::Delegate *operational_state_delegate = static_cast<OperationalState::Delegate *>(delegate);
-    OvenCavityOperationalState::Instance *instance = nullptr;
-    if (s_operational_state_instances.find(endpoint_id) == s_operational_state_instances.end()) {
+    cluster_t *cl = cluster::get(endpoint_id, OvenCavityOperationalState::Id);
+    VerifyOrReturn(cl != nullptr);
+    OvenCavityOperationalState::Instance *instance = static_cast<OvenCavityOperationalState::Instance*>(get_delegate_managed_instance(cl));
+    if (!instance) {
+        OperationalState::Delegate *operational_state_delegate = static_cast<OperationalState::Delegate *>(delegate);
         instance = new OvenCavityOperationalState::Instance(operational_state_delegate, endpoint_id);
-        s_operational_state_instances[endpoint_id] = static_cast<OperationalState::Instance *>(instance);
-    } else {
-        instance = static_cast<OvenCavityOperationalState::Instance *>(s_operational_state_instances[endpoint_id]);
+        set_delegate_shutdown_callback_and_managed_instance(cl, OvenCavityOperationalStateShutdownCB, instance);
     }
     (void) instance->Init();
 }
+
 void RefrigeratorAndTemperatureControlledCabinetModeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     InitModeDelegate(delegate, endpoint_id, RefrigeratorAndTemperatureControlledCabinetMode::Id);
 }
+
+static void RvcOperationalStateShutdownCB(void *managed_instance, uint16_t /*endpoint_id*/)
+{
+    delete static_cast<RvcOperationalState::Instance*>(managed_instance);
+}
+
 void RvcOperationalStateDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    RvcOperationalState::Delegate *rvc_operational_state_delegate = static_cast<RvcOperationalState::Delegate *>(delegate);
-    RvcOperationalState::Instance *instance = nullptr;
-    if (s_operational_state_instances.find(endpoint_id) == s_operational_state_instances.end()) {
+    cluster_t *cl = cluster::get(endpoint_id, RvcOperationalState::Id);
+    VerifyOrReturn(cl != nullptr);
+    RvcOperationalState::Instance *instance = static_cast<RvcOperationalState::Instance*>(get_delegate_managed_instance(cl));
+    if (!instance) {
+        RvcOperationalState::Delegate *rvc_operational_state_delegate = static_cast<RvcOperationalState::Delegate *>(delegate);
         instance = new RvcOperationalState::Instance(rvc_operational_state_delegate, endpoint_id);
-        s_operational_state_instances[endpoint_id] = static_cast<OperationalState::Instance *>(instance);
-    } else {
-        instance = static_cast<RvcOperationalState::Instance *>(s_operational_state_instances[endpoint_id]);
+        set_delegate_shutdown_callback_and_managed_instance(cl, RvcOperationalStateShutdownCB, instance);
     }
     (void) instance->Init();
 }
