@@ -20,6 +20,12 @@
 #include <app_reset.h>
 #include <esp_ot_config.h>
 
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD && defined(CONFIG_OPENTHREAD_BORDER_ROUTER) && defined(CONFIG_AUTO_UPDATE_RCP)
+#include <esp_ot_rcp_update.h>
+#include <esp_rcp_update.h>
+#include <platform/ThreadStackManager.h>
+#endif
+
 #include <platform/ESP32/OpenthreadLauncher.h>
 #include <platform/OpenThread/GenericThreadBorderRouterDelegate.h>
 #include <app/server/Server.h>
@@ -99,7 +105,8 @@ extern "C" void app_main()
         return;
     }
     esp_rcp_update_config_t rcp_update_config = ESP_OPENTHREAD_RCP_UPDATE_CONFIG();
-    openthread_init_br_rcp(&rcp_update_config);
+    esp_rcp_update_init(&rcp_update_config);
+    esp_ot_register_rcp_handler();
 #endif // CONFIG_OPENTHREAD_BORDER_ROUTER && CONFIG_AUTO_UPDATE_RCP
     /* Set OpenThread platform config */
     esp_openthread_platform_config_t config = {
@@ -115,6 +122,26 @@ extern "C" void app_main()
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Matter start failed: %d", err);
     }
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD && defined(CONFIG_OPENTHREAD_BORDER_ROUTER) && defined(CONFIG_AUTO_UPDATE_RCP)
+    if (err == ESP_OK) {
+        esp_matter::lock::ScopedChipStackLock lock(portMAX_DELAY);
+        using namespace chip::DeviceLayer;
+        bool thread_was_enabled = ThreadStackMgr().IsThreadEnabled();
+        if (thread_was_enabled) {
+            if (ThreadStackMgr().SetThreadEnabled(false) != CHIP_NO_ERROR) {
+                ESP_LOGE(TAG, "Failed to disable Thread before updating RCP");
+                return;
+            }
+        }
+        esp_ot_update_rcp_if_different();
+        if (thread_was_enabled) {
+            if (ThreadStackMgr().SetThreadEnabled(true) != CHIP_NO_ERROR) {
+                ESP_LOGE(TAG, "Failed to enable Thread after updating RCP");
+                return;
+            }
+        }
+    }
+#endif
 #if CONFIG_ENABLE_CHIP_SHELL
     esp_matter::console::diagnostics_register_commands();
     esp_matter::console::wifi_register_commands();
