@@ -25,6 +25,7 @@
     0x00000031, /* Cluster: Network Commissioning, Attribute: LastNetworkID, Privilege: administer */ \
     0x00000031, /* Cluster: Network Commissioning, Attribute: LastConnectErrorValue, Privilege: administer */ \
     0x0000003E, /* Cluster: Operational Credentials, Attribute: NOCs, Privilege: administer */ \
+    0x0000003F, /* Cluster: Group Key Management, Attribute: GroupcastAdoption, Privilege: administer */ \
     0x00000046, /* Cluster: ICD Management, Attribute: RegisteredClients, Privilege: administer */ \
     0x00000046, /* Cluster: ICD Management, Attribute: ICDCounter, Privilege: administer */ \
     0x00000101, /* Cluster: Door Lock, Attribute: AliroReaderVerificationKey, Privilege: administer */ \
@@ -97,6 +98,7 @@
     0x00000006, /* Cluster: Network Commissioning, Attribute: LastNetworkID, Privilege: administer */ \
     0x00000007, /* Cluster: Network Commissioning, Attribute: LastConnectErrorValue, Privilege: administer */ \
     0x00000000, /* Cluster: Operational Credentials, Attribute: NOCs, Privilege: administer */ \
+    0x00000004, /* Cluster: Group Key Management, Attribute: GroupcastAdoption, Privilege: administer */ \
     0x00000003, /* Cluster: ICD Management, Attribute: RegisteredClients, Privilege: administer */ \
     0x00000004, /* Cluster: ICD Management, Attribute: ICDCounter, Privilege: administer */ \
     0x00000080, /* Cluster: Door Lock, Attribute: AliroReaderVerificationKey, Privilege: administer */ \
@@ -169,6 +171,7 @@
     chip::Access::Privilege::kAdminister, /* Cluster: Network Commissioning, Attribute: LastNetworkID, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Network Commissioning, Attribute: LastConnectErrorValue, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Operational Credentials, Attribute: NOCs, Privilege: administer */ \
+    chip::Access::Privilege::kAdminister, /* Cluster: Group Key Management, Attribute: GroupcastAdoption, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: ICD Management, Attribute: RegisteredClients, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: ICD Management, Attribute: ICDCounter, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Door Lock, Attribute: AliroReaderVerificationKey, Privilege: administer */ \
@@ -235,6 +238,7 @@
     0x00000028, /* Cluster: Basic Information, Attribute: NodeLabel, Privilege: manage */ \
     0x00000028, /* Cluster: Basic Information, Attribute: Location, Privilege: administer */ \
     0x00000028, /* Cluster: Basic Information, Attribute: LocalConfigDisabled, Privilege: manage */ \
+    0x00000028, /* Cluster: Basic Information, Attribute: DeviceLocation, Privilege: administer */ \
     0x0000002A, /* Cluster: OTA Software Update Requestor, Attribute: DefaultOTAProviders, Privilege: administer */ \
     0x0000002B, /* Cluster: Localization Configuration, Attribute: ActiveLocale, Privilege: manage */ \
     0x0000002C, /* Cluster: Time Format Localization, Attribute: HourFormat, Privilege: manage */ \
@@ -243,7 +247,9 @@
     0x00000030, /* Cluster: General Commissioning, Attribute: Breadcrumb, Privilege: administer */ \
     0x00000031, /* Cluster: Network Commissioning, Attribute: InterfaceEnabled, Privilege: administer */ \
     0x00000039, /* Cluster: Bridged Device Basic Information, Attribute: NodeLabel, Privilege: manage */ \
+    0x00000039, /* Cluster: Bridged Device Basic Information, Attribute: DeviceLocation, Privilege: administer */ \
     0x0000003F, /* Cluster: Group Key Management, Attribute: GroupKeyMap, Privilege: manage */ \
+    0x0000003F, /* Cluster: Group Key Management, Attribute: GroupcastAdoption, Privilege: administer */ \
     0x00000041, /* Cluster: User Label, Attribute: LabelList, Privilege: manage */ \
     0x0000005C, /* Cluster: Smoke CO Alarm, Attribute: SmokeSensitivityLevel, Privilege: manage */ \
     0x00000099, /* Cluster: Energy EVSE, Attribute: UserMaximumChargeCurrent, Privilege: manage */ \
@@ -320,6 +326,7 @@
     0x00000406, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactOccupiedToUnoccupiedDelay, Privilege: manage */ \
     0x00000406, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactUnoccupiedToOccupiedDelay, Privilege: manage */ \
     0x00000406, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactUnoccupiedToOccupiedThreshold, Privilege: manage */ \
+    0x00000431, /* Cluster: Ambient Context Sensing, Attribute: ObjectCountConfig, Privilege: manage */ \
     0x00000431, /* Cluster: Ambient Context Sensing, Attribute: HoldTime, Privilege: manage */ \
     0x00000453, /* Cluster: Thread Network Directory, Attribute: PreferredExtendedPanID, Privilege: manage */ \
     0x00000551, /* Cluster: Camera AV Stream Management, Attribute: HDRModeEnabled, Privilege: manage */ \
@@ -351,6 +358,7 @@
     0x00000005, /* Cluster: Basic Information, Attribute: NodeLabel, Privilege: manage */ \
     0x00000006, /* Cluster: Basic Information, Attribute: Location, Privilege: administer */ \
     0x00000010, /* Cluster: Basic Information, Attribute: LocalConfigDisabled, Privilege: manage */ \
+    0x00000017, /* Cluster: Basic Information, Attribute: DeviceLocation, Privilege: administer */ \
     0x00000000, /* Cluster: OTA Software Update Requestor, Attribute: DefaultOTAProviders, Privilege: administer */ \
     0x00000000, /* Cluster: Localization Configuration, Attribute: ActiveLocale, Privilege: manage */ \
     0x00000000, /* Cluster: Time Format Localization, Attribute: HourFormat, Privilege: manage */ \
@@ -359,7 +367,9 @@
     0x00000000, /* Cluster: General Commissioning, Attribute: Breadcrumb, Privilege: administer */ \
     0x00000004, /* Cluster: Network Commissioning, Attribute: InterfaceEnabled, Privilege: administer */ \
     0x00000005, /* Cluster: Bridged Device Basic Information, Attribute: NodeLabel, Privilege: manage */ \
+    0x00000017, /* Cluster: Bridged Device Basic Information, Attribute: DeviceLocation, Privilege: administer */ \
     0x00000000, /* Cluster: Group Key Management, Attribute: GroupKeyMap, Privilege: manage */ \
+    0x00000004, /* Cluster: Group Key Management, Attribute: GroupcastAdoption, Privilege: administer */ \
     0x00000000, /* Cluster: User Label, Attribute: LabelList, Privilege: manage */ \
     0x0000000B, /* Cluster: Smoke CO Alarm, Attribute: SmokeSensitivityLevel, Privilege: manage */ \
     0x00000009, /* Cluster: Energy EVSE, Attribute: UserMaximumChargeCurrent, Privilege: manage */ \
@@ -436,6 +446,7 @@
     0x00000030, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactOccupiedToUnoccupiedDelay, Privilege: manage */ \
     0x00000031, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactUnoccupiedToOccupiedDelay, Privilege: manage */ \
     0x00000032, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactUnoccupiedToOccupiedThreshold, Privilege: manage */ \
+    0x00000006, /* Cluster: Ambient Context Sensing, Attribute: ObjectCountConfig, Privilege: manage */ \
     0x00000009, /* Cluster: Ambient Context Sensing, Attribute: HoldTime, Privilege: manage */ \
     0x00000000, /* Cluster: Thread Network Directory, Attribute: PreferredExtendedPanID, Privilege: manage */ \
     0x0000000D, /* Cluster: Camera AV Stream Management, Attribute: HDRModeEnabled, Privilege: manage */ \
@@ -467,6 +478,7 @@
     chip::Access::Privilege::kManage, /* Cluster: Basic Information, Attribute: NodeLabel, Privilege: manage */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Basic Information, Attribute: Location, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: Basic Information, Attribute: LocalConfigDisabled, Privilege: manage */ \
+    chip::Access::Privilege::kAdminister, /* Cluster: Basic Information, Attribute: DeviceLocation, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: OTA Software Update Requestor, Attribute: DefaultOTAProviders, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: Localization Configuration, Attribute: ActiveLocale, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Time Format Localization, Attribute: HourFormat, Privilege: manage */ \
@@ -475,7 +487,9 @@
     chip::Access::Privilege::kAdminister, /* Cluster: General Commissioning, Attribute: Breadcrumb, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Network Commissioning, Attribute: InterfaceEnabled, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: Bridged Device Basic Information, Attribute: NodeLabel, Privilege: manage */ \
+    chip::Access::Privilege::kAdminister, /* Cluster: Bridged Device Basic Information, Attribute: DeviceLocation, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: Group Key Management, Attribute: GroupKeyMap, Privilege: manage */ \
+    chip::Access::Privilege::kAdminister, /* Cluster: Group Key Management, Attribute: GroupcastAdoption, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: User Label, Attribute: LabelList, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Smoke CO Alarm, Attribute: SmokeSensitivityLevel, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Energy EVSE, Attribute: UserMaximumChargeCurrent, Privilege: manage */ \
@@ -552,6 +566,7 @@
     chip::Access::Privilege::kManage, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactOccupiedToUnoccupiedDelay, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactUnoccupiedToOccupiedDelay, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Occupancy Sensing, Attribute: PhysicalContactUnoccupiedToOccupiedThreshold, Privilege: manage */ \
+    chip::Access::Privilege::kManage, /* Cluster: Ambient Context Sensing, Attribute: ObjectCountConfig, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Ambient Context Sensing, Attribute: HoldTime, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Thread Network Directory, Attribute: PreferredExtendedPanID, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Camera AV Stream Management, Attribute: HDRModeEnabled, Privilege: manage */ \
@@ -633,8 +648,8 @@
     0x00000065, /* Cluster: Groupcast, Command: JoinGroup, Privilege: manage */ \
     0x00000065, /* Cluster: Groupcast, Command: LeaveGroup, Privilege: manage */ \
     0x00000065, /* Cluster: Groupcast, Command: UpdateGroupKey, Privilege: manage */ \
-    0x00000065, /* Cluster: Groupcast, Command: ExpireGracePeriod, Privilege: manage */ \
     0x00000065, /* Cluster: Groupcast, Command: ConfigureAuxiliaryACL, Privilege: administer */ \
+    0x00000065, /* Cluster: Groupcast, Command: GroupcastTesting, Privilege: administer */ \
     0x00000094, /* Cluster: Water Heater Management, Command: Boost, Privilege: manage */ \
     0x00000094, /* Cluster: Water Heater Management, Command: CancelBoost, Privilege: manage */ \
     0x00000101, /* Cluster: Door Lock, Command: SetWeekDaySchedule, Privilege: administer */ \
@@ -802,8 +817,8 @@
     0x00000000, /* Cluster: Groupcast, Command: JoinGroup, Privilege: manage */ \
     0x00000001, /* Cluster: Groupcast, Command: LeaveGroup, Privilege: manage */ \
     0x00000003, /* Cluster: Groupcast, Command: UpdateGroupKey, Privilege: manage */ \
-    0x00000004, /* Cluster: Groupcast, Command: ExpireGracePeriod, Privilege: manage */ \
-    0x00000005, /* Cluster: Groupcast, Command: ConfigureAuxiliaryACL, Privilege: administer */ \
+    0x00000004, /* Cluster: Groupcast, Command: ConfigureAuxiliaryACL, Privilege: administer */ \
+    0x00000005, /* Cluster: Groupcast, Command: GroupcastTesting, Privilege: administer */ \
     0x00000000, /* Cluster: Water Heater Management, Command: Boost, Privilege: manage */ \
     0x00000001, /* Cluster: Water Heater Management, Command: CancelBoost, Privilege: manage */ \
     0x0000000B, /* Cluster: Door Lock, Command: SetWeekDaySchedule, Privilege: administer */ \
@@ -971,8 +986,8 @@
     chip::Access::Privilege::kManage, /* Cluster: Groupcast, Command: JoinGroup, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Groupcast, Command: LeaveGroup, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Groupcast, Command: UpdateGroupKey, Privilege: manage */ \
-    chip::Access::Privilege::kManage, /* Cluster: Groupcast, Command: ExpireGracePeriod, Privilege: manage */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Groupcast, Command: ConfigureAuxiliaryACL, Privilege: administer */ \
+    chip::Access::Privilege::kAdminister, /* Cluster: Groupcast, Command: GroupcastTesting, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: Water Heater Management, Command: Boost, Privilege: manage */ \
     chip::Access::Privilege::kManage, /* Cluster: Water Heater Management, Command: CancelBoost, Privilege: manage */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Door Lock, Command: SetWeekDaySchedule, Privilege: administer */ \
@@ -1090,6 +1105,7 @@
     0x0000001F, /* Cluster: Access Control, Event: AccessControlExtensionChanged, Privilege: administer */ \
     0x0000001F, /* Cluster: Access Control, Event: FabricRestrictionReviewUpdate, Privilege: administer */ \
     0x0000001F, /* Cluster: Access Control, Event: AuxiliaryAccessUpdated, Privilege: administer */ \
+    0x00000065, /* Cluster: Groupcast, Event: GroupcastTesting, Privilege: administer */ \
     0x0000050E, /* Cluster: Account Login, Event: LoggedOut, Privilege: administer */ \
     0x00000751, /* Cluster: Commissioner Control, Event: CommissioningRequestResult, Privilege: manage */ \
 }
@@ -1100,6 +1116,7 @@
     0x00000001, /* Cluster: Access Control, Event: AccessControlExtensionChanged, Privilege: administer */ \
     0x00000002, /* Cluster: Access Control, Event: FabricRestrictionReviewUpdate, Privilege: administer */ \
     0x00000003, /* Cluster: Access Control, Event: AuxiliaryAccessUpdated, Privilege: administer */ \
+    0x00000000, /* Cluster: Groupcast, Event: GroupcastTesting, Privilege: administer */ \
     0x00000000, /* Cluster: Account Login, Event: LoggedOut, Privilege: administer */ \
     0x00000000, /* Cluster: Commissioner Control, Event: CommissioningRequestResult, Privilege: manage */ \
 }
@@ -1110,6 +1127,7 @@
     chip::Access::Privilege::kAdminister, /* Cluster: Access Control, Event: AccessControlExtensionChanged, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Access Control, Event: FabricRestrictionReviewUpdate, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Access Control, Event: AuxiliaryAccessUpdated, Privilege: administer */ \
+    chip::Access::Privilege::kAdminister, /* Cluster: Groupcast, Event: GroupcastTesting, Privilege: administer */ \
     chip::Access::Privilege::kAdminister, /* Cluster: Account Login, Event: LoggedOut, Privilege: administer */ \
     chip::Access::Privilege::kManage, /* Cluster: Commissioner Control, Event: CommissioningRequestResult, Privilege: manage */ \
 }
