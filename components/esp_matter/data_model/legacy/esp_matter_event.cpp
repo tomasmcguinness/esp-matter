@@ -15,7 +15,8 @@
 #include <esp_log.h>
 #include <esp_matter_event_impl.h>
 
-#include <app/clusters/switch-server/switch-server.h>
+#include <app/clusters/switch-server/CodegenIntegration.h>
+#include <lib/support/CodeUtils.h>
 #include <platform/DeviceControlServer.h>
 
 using chip::EndpointId;
@@ -159,6 +160,15 @@ event_t *create_boot_reason(cluster_t *cluster)
 
 } // namespace event
 } // namespace general_diagnostics
+
+namespace groupcast {
+namespace event {
+event_t *create_groupcast_testing(cluster_t *cluster)
+{
+    return esp_matter::event::create(cluster, Groupcast::Events::GroupcastTesting::Id);
+}
+} // namespace event
+} // namespace groupcast
 
 namespace wifi_network_diagnostics {
 namespace event {
@@ -427,43 +437,57 @@ event_t *create_multi_press_complete(cluster_t *cluster)
 
 esp_err_t send_switch_latched(EndpointId endpoint, uint8_t new_position)
 {
-    SwitchServer::Instance().OnSwitchLatch(endpoint, new_position);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnSwitchLatch(new_position);
     return ESP_OK;
 }
 
 esp_err_t send_initial_press(EndpointId endpoint, uint8_t new_position)
 {
-    SwitchServer::Instance().OnInitialPress(endpoint, new_position);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnInitialPress(new_position);
     return ESP_OK;
 }
 
 esp_err_t send_long_press(EndpointId endpoint, uint8_t new_position)
 {
-    SwitchServer::Instance().OnLongPress(endpoint, new_position);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnLongPress(new_position);
     return ESP_OK;
 }
 
 esp_err_t send_short_release(EndpointId endpoint, uint8_t previous_position)
 {
-    SwitchServer::Instance().OnShortRelease(endpoint, previous_position);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnShortRelease(previous_position);
     return ESP_OK;
 }
 
 esp_err_t send_long_release(EndpointId endpoint, uint8_t previous_position)
 {
-    SwitchServer::Instance().OnLongRelease(endpoint, previous_position);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnLongRelease(previous_position);
     return ESP_OK;
 }
 
 esp_err_t send_multi_press_ongoing(EndpointId endpoint, uint8_t new_position, uint8_t count)
 {
-    SwitchServer::Instance().OnMultiPressOngoing(endpoint, new_position, count);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnMultiPressOngoing(new_position, count);
     return ESP_OK;
 }
 
 esp_err_t send_multi_press_complete(EndpointId endpoint, uint8_t new_position, uint8_t count)
 {
-    SwitchServer::Instance().OnMultiPressComplete(endpoint, new_position, count);
+    auto * cluster = Switch::FindClusterOnEndpoint(endpoint);
+    VerifyOrReturnValue(cluster != nullptr, ESP_ERR_INVALID_STATE);
+    cluster->OnMultiPressComplete(new_position, count);
     return ESP_OK;
 }
 

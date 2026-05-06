@@ -18,13 +18,14 @@
 #include <esp_matter_feature.h>
 #include <esp_matter_data_model_priv.h>
 #include <app/clusters/mode-base-server/mode-base-server.h>
-#include <app/clusters/energy-evse-server/energy-evse-server.h>
+#include <clusters/EnergyEvse/ClusterId.h>
+#include <clusters/energy_evse/integration.h>
 #include <app/clusters/microwave-oven-control-server/microwave-oven-control-server.h>
 #include <app/clusters/operational-state-server/operational-state-server.h>
 #include <app/clusters/resource-monitoring-server/resource-monitoring-server.h>
 #include <app/clusters/fan-control-server/fan-control-server.h>
 #include <app/clusters/laundry-dryer-controls-server/laundry-dryer-controls-server.h>
-#include <app/clusters/valve-configuration-and-control-server/valve-configuration-and-control-cluster.h>
+#include <app/clusters/valve-configuration-and-control-server/valve-configuration-and-control-server.h>
 #include <app/clusters/door-lock-server/door-lock-server.h>
 #include <app/clusters/boolean-state-configuration-server/boolean-state-configuration-server.h>
 #include <app/clusters/application-basic-server/application-basic-server.h>
@@ -40,7 +41,6 @@
 #include <app/clusters/actions-server/actions-server.h>
 #include <app/clusters/thermostat-server/thermostat-server.h>
 #include <app/clusters/diagnostic-logs-server/diagnostic-logs-server.h>
-#include <app/clusters/closure-control-server/closure-control-server.h>
 #include <app/clusters/closure-dimension-server/closure-dimension-server.h>
 #include <app/clusters/application-launcher-server/application-launcher-server.h>
 #include <app/clusters/account-login-server/account-login-server.h>
@@ -62,11 +62,13 @@
 
 #include <clusters/ota_software_update_provider/integration.h>
 #include <clusters/push_av_stream_transport/integration.h>
+#include <clusters/closure_control/integration.h>
 #include <clusters/power_topology/integration.h>
 #include <clusters/device_energy_management/integration.h>
 #include <clusters/diagnostic_logs/integration.h>
 #include <clusters/electrical_power_measurement/integration.h>
 #include <clusters/time_synchronization/integration.h>
+#include <clusters/temperature_control/integration.h>
 #include <clusters/resource_monitor/integration.h>
 #include <clusters/chime/integration.h>
 
@@ -257,7 +259,7 @@ void EnergyEvseDelegateInitCB(void *delegate, uint16_t endpoint_id)
     uint32_t feature_map = get_feature_map_value(endpoint_id, EnergyEvse::Id);
     chip::BitMask<EnergyEvse::OptionalAttributes> optional_attrs = get_energy_evse_enabled_optional_attributes(endpoint_id);
     chip::BitMask<EnergyEvse::OptionalCommands> optional_cmds = get_energy_evse_enabled_optional_commands(endpoint_id);
-    energyEvseInstance = new EnergyEvse::Instance(endpoint_id, *energy_evse_delegate, chip::BitMask<EnergyEvse::Feature, uint32_t>(feature_map),
+    energyEvseInstance = new EnergyEvse::Instance(endpoint_id, *energy_evse_delegate, chip::BitMask<EnergyEvse::Feature>(feature_map),
                                                   optional_attrs, optional_cmds);
     (void)energyEvseInstance->Init();
 }
@@ -517,6 +519,13 @@ void ThermostatDelegateInitCB(void *delegate, uint16_t endpoint_id)
     Thermostat::SetDefaultDelegate(endpoint_id, thermostat_delegate);
 }
 
+void TemperatureControlDelegateInitCB(void *delegate, [[maybe_unused]] uint16_t endpoint_id)
+{
+    VerifyOrReturn(delegate != nullptr);
+    chip::app::Clusters::TemperatureControl::SetDelegate(
+        static_cast<chip::app::Clusters::TemperatureControl::SupportedTemperatureLevelsIteratorDelegate *>(delegate));
+}
+
 void OtaSoftwareUpdateProviderDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
@@ -541,21 +550,20 @@ void ChimeDelegateInitCB(void *delegate, uint16_t endpoint_id)
 void ClosureControlDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    ClosureControl::DelegateBase *closure_control_delegate = static_cast<ClosureControl::DelegateBase*>(delegate);
-    ClosureControl::MatterContext *matter_context = new ClosureControl::MatterContext(endpoint_id);
-    ClosureControl::ClusterLogic *cluster_logic = new ClosureControl::ClusterLogic(*closure_control_delegate, *matter_context);
-    ClosureControl::Interface *server_interface = new ClosureControl::Interface(endpoint_id, *cluster_logic);
-    (void)server_interface->Init();
+    chip::app::Clusters::ClosureControl::MatterClosureControlSetDelegate(
+        static_cast<chip::EndpointId>(endpoint_id),
+        *static_cast<chip::app::Clusters::ClosureControl::ClosureControlClusterDelegate *>(delegate));
 }
 
 void ClosureDimensionDelegateInitCB(void *delegate, uint16_t endpoint_id)
 {
     VerifyOrReturn(delegate != nullptr);
-    ClosureDimension::DelegateBase *closure_dimension_delegate = static_cast<ClosureDimension::DelegateBase*>(delegate);
-    ClosureDimension::MatterContext *matter_context = new ClosureDimension::MatterContext(endpoint_id);
-    ClosureDimension::ClusterLogic *cluster_logic = new ClosureDimension::ClusterLogic(*closure_dimension_delegate, *matter_context);
-    ClosureDimension::Interface *server_interface = new ClosureDimension::Interface(endpoint_id, *cluster_logic);
-    (void)server_interface->Init();
+    ClosureDimension::DelegateBase *closure_dimension_delegate = static_cast<ClosureDimension::DelegateBase *>(delegate);
+    auto ep = static_cast<chip::EndpointId>(endpoint_id);
+    ClosureDimension::MatterContext *matter_context = new ClosureDimension::MatterContext(ep);
+    ClosureDimension::Interface *server_interface =
+        new ClosureDimension::Interface(ep, *closure_dimension_delegate, *matter_context);
+    (void) server_interface->Init();
 }
 
 void PushAvStreamTransportDelegateInitCB(void *delegate, uint16_t endpoint_id)

@@ -2939,6 +2939,60 @@ esp_err_t add(cluster_t *cluster)
 } /* feature */
 } /* door_lock */
 
+namespace groupcast {
+namespace feature {
+namespace listener {
+
+uint32_t get_id()
+{
+    return (uint32_t)Groupcast::Feature::kListener;
+}
+
+esp_err_t add(cluster_t *cluster)
+{
+    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG, ESP_LOGE(TAG, "Cluster cannot be NULL"));
+    update_feature_map(cluster, get_id());
+
+    command::create_configure_auxiliary_acl(cluster);
+
+    return ESP_OK;
+}
+} /* listener */
+
+namespace sender {
+
+uint32_t get_id()
+{
+    return (uint32_t)Groupcast::Feature::kSender;
+}
+
+esp_err_t add(cluster_t *cluster)
+{
+    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG, ESP_LOGE(TAG, "Cluster cannot be NULL"));
+    update_feature_map(cluster, get_id());
+
+    return ESP_OK;
+}
+} /* sender */
+
+namespace per_group {
+
+uint32_t get_id()
+{
+    return (uint32_t)Groupcast::Feature::kPerGroup;
+}
+
+esp_err_t add(cluster_t *cluster)
+{
+    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG, ESP_LOGE(TAG, "Cluster cannot be NULL"));
+    update_feature_map(cluster, get_id());
+
+    return ESP_OK;
+}
+} /* per_group */
+} /* feature */
+} /* groupcast */
+
 namespace energy_evse {
 namespace feature {
 namespace charging_preferences {

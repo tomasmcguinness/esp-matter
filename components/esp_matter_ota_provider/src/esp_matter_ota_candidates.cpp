@@ -29,7 +29,7 @@
 #include <functional>
 #include <json_parser.h>
 
-#include <lib/support/ScopedBuffer.h>
+#include <lib/support/ScopedMemoryBuffer.h>
 
 #include <string.h>
 #include "core/DataModelTypes.h"

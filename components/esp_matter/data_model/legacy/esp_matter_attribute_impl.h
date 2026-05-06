@@ -390,6 +390,16 @@ attribute_t *create_name_support(cluster_t *cluster, uint8_t value);
 } /* attribute */
 } /* groups */
 
+namespace groupcast {
+namespace attribute {
+attribute_t *create_membership(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count);
+attribute_t *create_max_membership_count(cluster_t *cluster, uint16_t value);
+attribute_t *create_max_mcast_address_count(cluster_t *cluster, uint16_t value);
+attribute_t *create_used_mcast_address_count(cluster_t *cluster, uint16_t value);
+attribute_t *create_fabric_under_test(cluster_t *cluster, uint8_t value);
+} /* attribute */
+} /* groupcast */
+
 namespace scenes_management {
 namespace attribute {
 attribute_t *create_scene_table_size(cluster_t *cluster, uint16_t value);

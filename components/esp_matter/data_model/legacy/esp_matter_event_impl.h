@@ -40,6 +40,7 @@ event_t *create_state_changed(cluster_t *cluster);
 event_t *create_action_failed(cluster_t *cluster);
 } // namespace event
 } // namespace actions
+
 namespace basic_information {
 namespace event {
 event_t *create_start_up(cluster_t *cluster);
@@ -65,6 +66,12 @@ event_t *create_network_fault_change(cluster_t *cluster);
 event_t *create_boot_reason(cluster_t *cluster);
 } // namespace event
 } // namespace general_diagnostics
+
+namespace groupcast {
+namespace event {
+event_t *create_groupcast_testing(cluster_t *cluster);
+} // namespace event
+} // namespace groupcast
 
 namespace wifi_network_diagnostics {
 namespace event {

@@ -99,7 +99,12 @@ esp_err_t add(endpoint_t *endpoint, config_t *config)
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD && defined(CONFIG_SUPPORT_THREAD_NETWORK_DIAGNOSTICS_CLUSTER)
     thread_network_diagnostics::create(endpoint, nullptr, CLUSTER_FLAG_SERVER);
 #endif
-
+#if defined(CONFIG_SUPPORT_GROUPCAST_CLUSTER)
+    if (config->groupcast.feature_flags == 0) {
+        config->groupcast.feature_flags = chip::to_underlying(Groupcast::Feature::kListener);
+    }
+    groupcast::create(endpoint, &(config->groupcast), CLUSTER_FLAG_SERVER);
+#endif
     return ESP_OK;
 }
 } /* root_node */

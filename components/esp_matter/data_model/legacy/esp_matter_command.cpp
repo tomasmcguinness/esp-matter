@@ -82,84 +82,6 @@ static esp_err_t esp_matter_command_callback_announce_ota_provider(const Concret
     return ESP_OK;
 }
 
-static esp_err_t esp_matter_command_callback_add_group(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                       void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::AddGroup::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterAddGroupCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_view_group(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                        void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::ViewGroup::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterViewGroupCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_get_group_membership(const ConcreteCommandPath &command_path,
-                                                                  TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::GetGroupMembership::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterGetGroupMembershipCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_remove_group(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                          void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::RemoveGroup::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterRemoveGroupCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_remove_all_groups(const ConcreteCommandPath &command_path,
-                                                               TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::RemoveAllGroups::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterRemoveAllGroupsCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_add_group_if_identifying(const ConcreteCommandPath &command_path,
-                                                                      TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::AddGroupIfIdentifying::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterAddGroupIfIdentifyingCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
 static esp_err_t esp_matter_command_callback_off(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                  void *opaque_ptr)
 {
@@ -819,17 +741,6 @@ static esp_err_t esp_matter_command_callback_set_active_preset_request(const Con
     return ESP_OK;
 }
 
-static esp_err_t esp_matter_command_callback_thread_reset_counts(const ConcreteCommandPath &command_path,
-                                                                 TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::ThreadNetworkDiagnostics::Commands::ResetCounts::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfThreadNetworkDiagnosticsClusterResetCountsCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
 static esp_err_t esp_matter_command_callback_up_or_open(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                         void *opaque_ptr)
 {
@@ -891,16 +802,6 @@ static esp_err_t esp_matter_command_callback_change_to_mode(const ConcreteComman
     CHIP_ERROR error = Decode(tlv_data, command_data);
     if (error == CHIP_NO_ERROR) {
         emberAfModeSelectClusterChangeToModeCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_set_temperature(const ConcreteCommandPath &command_path, TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::TemperatureControl::Commands::SetTemperature::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfTemperatureControlClusterSetTemperatureCallback((CommandHandler *)opaque_ptr, command_path, command_data);
     }
     return ESP_OK;
 }
@@ -1069,26 +970,6 @@ static esp_err_t esp_matter_command_callback_send_key(const ConcreteCommandPath 
     return ESP_OK;
 }
 
-static esp_err_t esp_matter_command_callback_open(const ConcreteCommandPath &command_path, TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::ValveConfigurationAndControl::Commands::Open::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfValveConfigurationAndControlClusterOpenCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_close(const ConcreteCommandPath &command_path, TLVReader &tlv_data, void *opaque_ptr)
-{
-    chip::app::Clusters::ValveConfigurationAndControl::Commands::Close::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfValveConfigurationAndControlClusterCloseCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
 namespace esp_matter {
 namespace cluster {
 
@@ -1207,8 +1088,7 @@ namespace command {
 
 command_t *create_reset_counts(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, ThreadNetworkDiagnostics::Commands::ResetCounts::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_thread_reset_counts);
+    return esp_matter::command::create(cluster, ThreadNetworkDiagnostics::Commands::ResetCounts::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 } /* command */
@@ -1297,6 +1177,44 @@ command_t *create_reset_watermarks(cluster_t *cluster)
 } /* command */
 } /* software_diagnostics */
 
+namespace groupcast {
+namespace command {
+command_t *create_join_group(cluster_t *cluster)
+{
+    return esp_matter::command::create(cluster, Groupcast::Commands::JoinGroup::Id, COMMAND_FLAG_ACCEPTED,
+                                       NULL);
+}
+
+command_t *create_leave_group(cluster_t *cluster)
+{
+    return esp_matter::command::create(cluster, Groupcast::Commands::LeaveGroup::Id, COMMAND_FLAG_ACCEPTED,
+                                       NULL);
+}
+
+command_t *create_leave_group_response(cluster_t *cluster)
+{
+    return esp_matter::command::create(cluster, Groupcast::Commands::LeaveGroupResponse::Id, COMMAND_FLAG_GENERATED, NULL);
+}
+
+command_t *create_update_group_key(cluster_t *cluster)
+{
+    return esp_matter::command::create(cluster, Groupcast::Commands::UpdateGroupKey::Id, COMMAND_FLAG_ACCEPTED,
+                                       NULL);
+}
+
+command_t *create_configure_auxiliary_acl(cluster_t *cluster)
+{
+    return esp_matter::command::create(cluster, Groupcast::Commands::ConfigureAuxiliaryACL::Id, COMMAND_FLAG_ACCEPTED,
+                                       NULL);
+}
+
+command_t *create_groupcast_testing(cluster_t *cluster)
+{
+    return esp_matter::command::create(cluster, Groupcast::Commands::GroupcastTesting::Id, COMMAND_FLAG_ACCEPTED,
+                                       NULL);
+}
+} /* command */
+} /* groupcast */
 namespace group_key_management {
 namespace command {
 
@@ -1646,38 +1564,32 @@ namespace command {
 
 command_t *create_add_group(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Groups::Commands::AddGroup::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_add_group);
+    return esp_matter::command::create(cluster, Groups::Commands::AddGroup::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_view_group(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Groups::Commands::ViewGroup::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_view_group);
+    return esp_matter::command::create(cluster, Groups::Commands::ViewGroup::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_get_group_membership(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Groups::Commands::GetGroupMembership::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_get_group_membership);
+    return esp_matter::command::create(cluster, Groups::Commands::GetGroupMembership::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_remove_group(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Groups::Commands::RemoveGroup::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_remove_group);
+    return esp_matter::command::create(cluster, Groups::Commands::RemoveGroup::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_remove_all_groups(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Groups::Commands::RemoveAllGroups::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_remove_all_groups);
+    return esp_matter::command::create(cluster, Groups::Commands::RemoveAllGroups::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_add_group_if_identifying(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Groups::Commands::AddGroupIfIdentifying::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_add_group_if_identifying);
+    return esp_matter::command::create(cluster, Groups::Commands::AddGroupIfIdentifying::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_add_group_response(cluster_t *cluster)
@@ -2343,8 +2255,7 @@ namespace command {
 
 command_t *create_set_temperature(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, TemperatureControl::Commands::SetTemperature::Id, COMMAND_FLAG_ACCEPTED,
-                                       esp_matter_command_callback_set_temperature);
+    return esp_matter::command::create(cluster, TemperatureControl::Commands::SetTemperature::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 } /* command */
@@ -2486,12 +2397,12 @@ namespace command {
 
 command_t *create_open(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, ValveConfigurationAndControl::Commands::Open::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_open);
+    return esp_matter::command::create(cluster, ValveConfigurationAndControl::Commands::Open::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_close(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, ValveConfigurationAndControl::Commands::Close::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_close);
+    return esp_matter::command::create(cluster, ValveConfigurationAndControl::Commands::Close::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 } /* command */

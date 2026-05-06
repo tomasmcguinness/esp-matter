@@ -202,6 +202,17 @@ command_t *create_remove_group_response(cluster_t *cluster);
 } /* command */
 } /* groups */
 
+namespace groupcast {
+namespace command {
+command_t *create_join_group(cluster_t *cluster);
+command_t *create_leave_group(cluster_t *cluster);
+command_t *create_leave_group_response(cluster_t *cluster);
+command_t *create_update_group_key(cluster_t *cluster);
+command_t *create_configure_auxiliary_acl(cluster_t *cluster);
+command_t *create_groupcast_testing(cluster_t *cluster);
+} /* command */
+} /* groupcast */
+
 namespace icd_management {
 namespace command {
 command_t *create_register_client(cluster_t *cluster);
