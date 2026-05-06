@@ -32,7 +32,9 @@ void ESPMatterFixedLabelClusterServerInitCallback(EndpointId endpointId)
         return;
     }
 
-    gServers[endpointId].Create(endpointId);
+    DeviceLayer::DeviceInfoProvider * deviceInfoProvider = DeviceLayer::GetDeviceInfoProvider();
+    VerifyOrDie(deviceInfoProvider != nullptr);
+    gServers[endpointId].Create(endpointId, *DeviceLayer::GetDeviceInfoProvider());
     CHIP_ERROR err =
         esp_matter::data_model::provider::get_instance().registry().Register(gServers[endpointId].Registration());
     if (err != CHIP_NO_ERROR) {

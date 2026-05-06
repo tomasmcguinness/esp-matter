@@ -16,6 +16,8 @@
 
 #include <app/clusters/chime-server/ChimeCluster.h>
 #include <app/server-cluster/ServerClusterInterfaceRegistry.h>
+#include <app/SafeAttributePersistenceProvider.h>
+#include <lib/support/CodeUtils.h>
 
 namespace chip::app::Clusters::Chime {
 
@@ -28,7 +30,7 @@ public:
      * Note: the caller must ensure that the delegate lives throughout the instance's lifetime.
      */
     ChimeServer(EndpointId endpointId, ChimeDelegate &delegate)
-        : mCluster(endpointId, delegate)
+        : mEndpointId(endpointId), mDelegate(&delegate)
     {
     }
     ~ChimeServer();
@@ -87,7 +89,11 @@ public:
     // Cluster constants from the spec
     static constexpr uint8_t kMaxChimeSoundNameSize = ChimeCluster::kMaxChimeSoundNameSize;
 
-    // The Code Driven ChimeCluster instance
-    chip::app::RegisteredServerCluster<ChimeCluster> mCluster;
+private:
+    EndpointId mEndpointId;
+    ChimeDelegate * mDelegate;
+
+    // Constructed in Init() once SafeAttributePersistenceProvider is available.
+    chip::app::LazyRegisteredServerCluster<ChimeCluster> mCluster;
 };
 } // namespace chip::app::Clusters::Chime

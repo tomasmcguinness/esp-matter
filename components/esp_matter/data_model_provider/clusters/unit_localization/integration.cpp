@@ -13,34 +13,79 @@
 // limitations under the License.
 
 #include "integration.h"
-#include "app/AttributeAccessInterfaceRegistry.h"
-#include <app/server-cluster/ServerClusterInterface.h>
+#include "esp_matter_data_model.h"
+#include "esp_matter_data_model_priv.h"
+#include <app/ClusterCallbacks.h>
+#include <app/server-cluster/ServerClusterInterfaceRegistry.h>
+#include <data_model_provider/esp_matter_data_model_provider.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 using namespace chip;
 using namespace chip::app;
 using namespace chip::app::Clusters;
 using namespace chip::app::Clusters::UnitLocalization;
 
-namespace chip::app::Clusters::UnitLocalization {
+namespace {
 
-UnitLocalizationServer  &UnitLocalizationServer::Instance()
+LazyRegisteredServerCluster<UnitLocalizationServer> gServer;
+
+uint32_t get_feature_map(esp_matter::cluster_t *cluster)
 {
-    static UnitLocalizationServer mInstance;
-    return mInstance;
+    esp_matter::attribute_t *attribute = esp_matter::attribute::get(cluster, Globals::Attributes::FeatureMap::Id);
+    if (attribute) {
+        esp_matter_attr_val_t val = esp_matter_invalid(nullptr);
+        if (esp_matter::attribute::get_val_internal(attribute, &val) == ESP_OK &&
+                val.type == ESP_MATTER_VAL_TYPE_BITMAP32) {
+            return val.val.u32;
+        }
+    }
+    return 0;
 }
 
-} // namespace chip::app::Clusters::UnitLocalization
+} // namespace
 
-void ESPMatterUnitLocalizationServerInitCallback(EndpointId endpointId) {}
-void ESPMatterUnitLocalizationServerShutdownCallback(EndpointId endpointId, ClusterShutdownType shutdownType) {}
-
-void MatterUnitLocalizationPluginServerInitCallback()
+UnitLocalizationServer &UnitLocalizationServer::Instance()
 {
-    LogErrorOnFailure(UnitLocalizationServer::Instance().Init());
-    AttributeAccessInterfaceRegistry::Instance().Register(&UnitLocalizationServer::Instance());
+    VerifyOrDie(gServer.IsConstructed());
+    return gServer.Cluster();
 }
 
-void MatterUnitLocalizationPluginServerShutdownCallback()
+void ESPMatterUnitLocalizationClusterServerInitCallback(EndpointId endpointId)
 {
-    AttributeAccessInterfaceRegistry::Instance().Unregister(&UnitLocalizationServer::Instance());
+    VerifyOrReturn(endpointId == kRootEndpointId);
+    if (gServer.IsConstructed()) {
+        return;
+    }
+
+    esp_matter::cluster_t *cluster = esp_matter::cluster::get(endpointId, UnitLocalization::Id);
+    VerifyOrReturn(cluster != nullptr,
+                   ChipLogError(AppServer,
+                                "UnitLocalization: cluster missing in esp-matter data model for endpoint %u", endpointId));
+
+    gServer.Create(endpointId, BitFlags<UnitLocalization::Feature>(get_feature_map(cluster)));
+    CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(gServer.Registration());
+    if (err != CHIP_NO_ERROR) {
+        ChipLogError(AppServer, "Failed to register UnitLocalization - Error: %" CHIP_ERROR_FORMAT, err.Format());
+        gServer.Destroy();
+    }
 }
+
+void ESPMatterUnitLocalizationClusterServerShutdownCallback(EndpointId endpointId, ClusterShutdownType shutdownType)
+{
+    VerifyOrReturn(endpointId == kRootEndpointId);
+    if (!gServer.IsConstructed()) {
+        return;
+    }
+
+    CHIP_ERROR err =
+        esp_matter::data_model::provider::get_instance().registry().Unregister(&gServer.Cluster(), shutdownType);
+    if (err != CHIP_NO_ERROR) {
+        ChipLogError(AppServer, "UnitLocalization unregister error: %" CHIP_ERROR_FORMAT, err.Format());
+    }
+    gServer.Destroy();
+}
+
+void MatterUnitLocalizationPluginServerInitCallback() {}
+
+void MatterUnitLocalizationPluginServerShutdownCallback() {}

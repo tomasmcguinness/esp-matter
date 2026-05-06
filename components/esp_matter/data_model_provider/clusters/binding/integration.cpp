@@ -32,7 +32,14 @@ void ESPMatterBindingClusterServerInitCallback(EndpointId endpointId)
         return;
     }
 
-    gServers[endpointId].Create(endpointId);
+    gServers[endpointId].Create(
+    BindingCluster::Context{
+        .bindingTable    = Binding::Table::GetInstance(),
+        .bindingManager  = Binding::Manager::GetInstance(),
+        .platformManager = DeviceLayer::PlatformMgr(),
+    },
+    endpointId);
+
     CHIP_ERROR err =
         esp_matter::data_model::provider::get_instance().registry().Register(gServers[endpointId].Registration());
     if (err != CHIP_NO_ERROR) {

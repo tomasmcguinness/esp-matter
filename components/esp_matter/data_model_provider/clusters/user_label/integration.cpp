@@ -14,8 +14,12 @@
 
 #include <app/ClusterCallbacks.h>
 #include <app/clusters/user-label-server/UserLabelCluster.h>
+#include <app/server/Server.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <lib/support/CodeUtils.h>
+#include <platform/DeviceInfoProvider.h>
 #include <unordered_map>
+#include <utility>
 
 using namespace chip;
 using namespace chip::app;
@@ -32,7 +36,14 @@ void ESPMatterUserLabelClusterServerInitCallback(EndpointId endpointId)
         return;
     }
 
-    gServers[endpointId].Create(endpointId);
+    DeviceLayer::DeviceInfoProvider * deviceInfoProvider = DeviceLayer::GetDeviceInfoProvider();
+    VerifyOrDie(deviceInfoProvider != nullptr);
+
+    UserLabelCluster::Context ctx{
+        .deviceInfoProvider = *deviceInfoProvider,
+        .fabricTable        = Server::GetInstance().GetFabricTable(),
+    };
+    gServers[endpointId].Create(endpointId, std::move(ctx));
     CHIP_ERROR err =
         esp_matter::data_model::provider::get_instance().registry().Register(gServers[endpointId].Registration());
     if (err != CHIP_NO_ERROR) {
@@ -43,6 +54,9 @@ void ESPMatterUserLabelClusterServerInitCallback(EndpointId endpointId)
 
 void ESPMatterUserLabelClusterServerShutdownCallback(EndpointId endpointId, ClusterShutdownType shutdownType)
 {
+    if (!gServers[endpointId].IsConstructed()) {
+        return;
+    }
     CHIP_ERROR err =
         esp_matter::data_model::provider::get_instance().registry().Unregister(&gServers[endpointId].Cluster(), shutdownType);
     if (err != CHIP_NO_ERROR) {

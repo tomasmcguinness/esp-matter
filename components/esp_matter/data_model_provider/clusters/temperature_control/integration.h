@@ -14,10 +14,20 @@
 
 #pragma once
 
-#include <app/clusters/boolean-state-server/BooleanStateCluster.h>
+#include <app/clusters/temperature-control-server/supported-temperature-levels-manager.h>
+#include <lib/core/DataModelTypes.h>
 
-namespace chip::app::Clusters::BooleanState {
+namespace chip {
+namespace app {
+namespace Clusters {
 
-BooleanStateCluster * FindClusterOnEndpoint(EndpointId endpointId);
+namespace TemperatureControl {
 
-} // namespace chip::app::Clusters::BooleanState
+SupportedTemperatureLevelsIteratorDelegate * GetDelegate();
+
+void SetDelegate(SupportedTemperatureLevelsIteratorDelegate * delegate);
+
+} // namespace TemperatureControl
+} // namespace Clusters
+} // namespace app
+} // namespace chip

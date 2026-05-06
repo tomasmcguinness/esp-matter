@@ -17,6 +17,8 @@
 #include <data_model_provider/esp_matter_data_model_provider.h>
 #include <esp_matter_data_model.h>
 #include <esp_matter_data_model_priv.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 #include <unordered_map>
 
 using namespace chip;
@@ -65,6 +67,10 @@ void ESPMatterEthernetNetworkDiagnosticsClusterServerInitCallback(EndpointId end
         return;
     }
     esp_matter::cluster_t *cluster = esp_matter::cluster::get(endpointId, EthernetNetworkDiagnostics::Id);
+    VerifyOrReturn(cluster != nullptr,
+                   ChipLogError(AppServer,
+                                "EthernetNetworkDiagnostics: cluster missing in esp-matter data model for endpoint %u",
+                                endpointId));
 
     gServers[endpointId].Create(DeviceLayer::GetDiagnosticDataProvider(),
                                 BitFlags<EthernetNetworkDiagnostics::Feature>(get_feature_map(cluster)),

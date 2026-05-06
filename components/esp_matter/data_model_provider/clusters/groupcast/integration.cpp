@@ -14,17 +14,23 @@
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/clusters/groupcast/GroupcastCluster.h>
+#include <app/clusters/groupcast/GroupcastContext.h>
+#include <app/server/Server.h>
 #include <clusters/Groupcast/Enums.h>
+#include <credentials/GroupDataProvider.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <lib/support/CodeUtils.h>
+#include <platform/DefaultTimerDelegate.h>
 
+using namespace chip;
 using namespace chip::app;
 using namespace chip::app::Clusters;
 using namespace chip::app::Clusters::Groupcast::Attributes;
-using chip::Protocols::InteractionModel::Status;
 
 namespace {
 
 LazyRegisteredServerCluster<GroupcastCluster> gServer;
+DefaultTimerDelegate sTimerDelegate;
 
 } // namespace
 
@@ -32,20 +38,40 @@ void ESPMatterGroupcastClusterServerInitCallback(chip::EndpointId endpointId)
 {
     VerifyOrDie(endpointId == chip::kRootEndpointId);
 
-    // Currently we don't support groupcast cluster in our data model, create the cluster with LN feature enabled.
-    // TODO: We should create the cluster according to the enabled features after we add the cluster.
-    chip::BitFlags<Groupcast::Feature> feature;
-    feature.Set(Groupcast::Feature::kListener);
-    gServer.Create(feature);
+    if (gServer.IsConstructed()) {
+        return;
+    }
+
+    // Currently we don't support groupcast cluster in our data model; create with Listener (LN) feature only.
+    // TODO: Create from enabled ZAP features once the cluster is in the ESP-Matter data model.
+    Credentials::GroupDataProvider * groupDataProvider = Credentials::GetGroupDataProvider();
+    VerifyOrDie(groupDataProvider != nullptr);
+
+    BitFlags<Groupcast::Feature> features;
+    features.Set(Groupcast::Feature::kListener);
+
+    gServer.Create(
+    GroupcastContext{
+        .fabricTable       = Server::GetInstance().GetFabricTable(),
+        .groupDataProvider = *groupDataProvider,
+        .timerDelegate     = sTimerDelegate,
+    },
+    features);
+
     CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(gServer.Registration());
     if (err != CHIP_NO_ERROR) {
         ChipLogError(AppServer, "Failed to register Groupcast - Error %" CHIP_ERROR_FORMAT, err.Format());
+        gServer.Destroy();
     }
 }
 
 void ESPMatterGroupcastClusterServerShutdownCallback(chip::EndpointId endpointId, ClusterShutdownType shutdownType)
 {
     VerifyOrDie(endpointId == chip::kRootEndpointId);
+
+    if (!gServer.IsConstructed()) {
+        return;
+    }
 
     CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Unregister(&gServer.Cluster(), shutdownType);
     if (err != CHIP_NO_ERROR) {

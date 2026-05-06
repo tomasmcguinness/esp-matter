@@ -23,6 +23,7 @@
 #include <clusters/TimeSynchronization/Enums.h>
 #include <esp_check.h>
 #include "support/CodeUtils.h"
+#include <lib/support/logging/CHIPLogging.h>
 
 using namespace chip;
 using namespace chip::app;
@@ -89,7 +90,10 @@ void ESPMatterTimeSynchronizationClusterServerInitCallback(EndpointId endpointId
     TimeSynchronizationCluster::OptionalAttributeSet attrSet;
     TimeSynchronizationCluster::StartupConfiguration startupConfig;
     BitFlags<TimeSynchronization::Feature> featureMap;
-    VerifyOrReturn(GetClusterConfig(endpointId, attrSet, startupConfig, featureMap) == ESP_OK);
+    VerifyOrReturn(GetClusterConfig(endpointId, attrSet, startupConfig, featureMap) == ESP_OK,
+                   ChipLogError(AppServer,
+                                "TimeSynchronization: cluster missing or invalid esp-matter data model for endpoint %u",
+                                endpointId));
     gServer.Create(endpointId, featureMap, attrSet, startupConfig);
     CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(gServer.Registration());
     if (err != CHIP_NO_ERROR) {

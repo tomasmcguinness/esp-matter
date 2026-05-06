@@ -18,6 +18,9 @@
 #include <app/clusters/push-av-stream-transport-server/PushAVStreamTransportCluster.h>
 #include <data_model/esp_matter_data_model.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <lib/support/CodeUtils.h>
+#include <data_model/esp_matter_attribute_helpers.h>
+#include <lib/support/logging/CHIPLogging.h>
 #include <unordered_map>
 
 using namespace chip;
@@ -29,30 +32,18 @@ using namespace esp_matter;
 namespace {
 std::unordered_map<EndpointId, LazyRegisteredServerCluster<PushAvStreamTransportServer>> gServers;
 
-bool IsClusterEnabled(EndpointId endpointId)
-{
-    cluster_t *cluster = cluster::get(endpointId, PushAvStreamTransport::Id);
-    return cluster != nullptr;
-}
-
-uint32_t GetFeatureMap(EndpointId endpointId)
-{
-    attribute_t *attribute = attribute::get(endpointId, PushAvStreamTransport::Id, Globals::Attributes::FeatureMap::Id);
-    VerifyOrReturnValue(attribute, 0);
-
-    /* Update the value if the attribute already exists */
-    esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-    VerifyOrReturnValue(attribute::get_val_internal(attribute, &val) == ESP_OK, 0);
-    return val.val.u32;
-}
 } // namespace
 
 void ESPMatterPushAvStreamTransportClusterServerInitCallback(EndpointId endpointId)
 {
-    if (!IsClusterEnabled(endpointId) || gServers[endpointId].IsConstructed()) {
+    VerifyOrReturn(cluster::get(endpointId, PushAvStreamTransport::Id) != nullptr,
+                   ChipLogError(AppServer,
+                                "PushAvStreamTransport: cluster missing in esp-matter data model for endpoint %u",
+                                endpointId));
+    if (gServers[endpointId].IsConstructed()) {
         return;
     }
-    uint32_t rawFeatureMap = GetFeatureMap(endpointId);
+    uint32_t rawFeatureMap = read_feature_map_u32(endpointId, PushAvStreamTransport::Id);
     ChipLogProgress(AppServer, "Registering Push AV Stream Transport on endpoint %u", endpointId);
     gServers[endpointId].Create(endpointId, BitFlags<PushAvStreamTransport::Feature>(rawFeatureMap));
     CHIP_ERROR err = data_model::provider::get_instance().registry().Register(gServers[endpointId].Registration());
@@ -65,7 +56,7 @@ void ESPMatterPushAvStreamTransportClusterServerInitCallback(EndpointId endpoint
 
 void ESPMatterPushAvStreamTransportClusterServerShutdownCallback(EndpointId endpointId, ClusterShutdownType shutdownType)
 {
-    if (!IsClusterEnabled(endpointId) || !gServers[endpointId].IsConstructed()) {
+    if (cluster::get(endpointId, PushAvStreamTransport::Id) == nullptr || !gServers[endpointId].IsConstructed()) {
         return;
     }
 
@@ -90,14 +81,14 @@ void SetDelegate(EndpointId endpointId, PushAvStreamTransportDelegate * delegate
     (void)gServers[endpointId].Cluster().Init();
 }
 
-void SetTLSClientManagementDelegate(EndpointId endpointId, TlsClientManagementDelegate * delegate)
+void SetTLSClientManagementDelegate(EndpointId endpointId, TLSClientManagementDelegate * delegate)
 {
     gServers[endpointId].Cluster().SetTLSClientManagementDelegate(delegate);
 }
 
-void SetTlsCertificateManagementDelegate(EndpointId endpointId, TlsCertificateManagementDelegate * delegate)
+void SetTLSCertificateManagementDelegate(EndpointId endpointId, TLSCertificateManagementDelegate * delegate)
 {
-    gServers[endpointId].Cluster().SetTlsCertificateManagementDelegate(delegate);
+    gServers[endpointId].Cluster().SetTLSCertificateManagementDelegate(delegate);
 }
 
 }
