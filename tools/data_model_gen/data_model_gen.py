@@ -211,9 +211,12 @@ class DataModelGenerator:
 )
 @click.option(
     "--chip-version",
-    default=global_config.DEFAULT_CHIP_VERSION,
-    type=click.Choice(global_config.SPECIFICATION_VERSIONS),
-    help="Matter specification version used to generate the data model",
+    default=None,
+    type=str,
+    help=(
+        "Name of the revision folder under connectedhomeip/.../data_model/ (e.g. 1.5, 1.6). "
+        "If omitted, the highest such version found in the submodule is used."
+    ),
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose logging")
 @click.option("--no-colored-logs", is_flag=True, help="Disable colored logs")
@@ -242,7 +245,7 @@ def main(
     device_file: str,
     cluster_dir: str,
     device_dir: str,
-    chip_version: str,
+    chip_version: Optional[str],
     verbose: bool,
     no_colored_logs: bool,
     skip_xml_parsing: bool,
@@ -271,6 +274,39 @@ def main(
 
         global_config.setup_provisional_mode(allow_provisional)
         global_config.set_esp_matter_path(esp_dir)
+
+        available_versions = global_config.discover_data_model_specification_versions(
+            esp_dir
+        )
+        if not available_versions:
+            raise ConfigurationError(
+                "No data model revision folders found under the connectedhomeip submodule",
+                file_path=global_config.get_chip_data_model_root(esp_dir),
+                context="main",
+                suggestion=(
+                    "Ensure connectedhomeip is checked out and data_model contains "
+                    "revision directories (with clusters/ and device_types/)."
+                ),
+            )
+
+        if chip_version is None:
+            chip_version = max(
+                available_versions, key=global_config.specification_version_sort_key
+            )
+            logger.info(
+                "Using default data model revision %s (highest of: %s)",
+                chip_version,
+                ", ".join(available_versions),
+            )
+        elif chip_version not in available_versions:
+            raise ConfigurationError(
+                f"Unknown data model revision {chip_version!r}",
+                file_path=global_config.get_chip_data_model_root(esp_dir),
+                context="main",
+                suggestion=(
+                    "Use one of: " + ", ".join(available_versions)
+                ),
+            )
 
         if not cluster_dir or not device_dir:
             default_xml_input_dir = os.path.join(chip_path, "data_model", chip_version)

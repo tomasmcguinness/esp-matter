@@ -18,6 +18,8 @@ import unittest
 import sys
 import os
 import logging
+import tempfile
+import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.config import (  # noqa: E402
@@ -26,8 +28,10 @@ from utils.config import (  # noqa: E402
     set_esp_matter_path,
     setup_logger,
     FileNames,
-    SPECIFICATION_VERSIONS,
-    DEFAULT_CHIP_VERSION,
+    discover_data_model_specification_versions,
+    specification_version_sort_key,
+    get_highest_data_model_version,
+    get_chip_data_model_root,
 )
 from utils.exceptions import ConfigurationError  # noqa: E402
 
@@ -108,15 +112,56 @@ class TestFileNames(unittest.TestCase):
             )
 
 
-class TestSpecificationVersions(unittest.TestCase):
-    """Test specification version constants."""
+def _make_fake_esp_matter_with_data_model(versions):
+    """
+    Build a minimal esp-matter tree with connectedhomeip/.../data_model/<ver>/{clusters,device_types}.
+    """
+    root = tempfile.mkdtemp()
+    for ver in versions:
+        base = os.path.join(
+            root,
+            "connectedhomeip",
+            "connectedhomeip",
+            "data_model",
+            ver,
+        )
+        os.makedirs(os.path.join(base, "clusters"), exist_ok=True)
+        os.makedirs(os.path.join(base, "device_types"), exist_ok=True)
+    return root
 
-    def test_versions_list(self):
-        self.assertIn("1.4", SPECIFICATION_VERSIONS)
-        self.assertIn("1.5", SPECIFICATION_VERSIONS)
 
-    def test_default_version(self):
-        self.assertIn(DEFAULT_CHIP_VERSION, SPECIFICATION_VERSIONS)
+class TestDataModelVersionDiscovery(unittest.TestCase):
+    """Test discovery of data_model revision folders from the connectedhomeip submodule layout."""
+
+    def test_discovers_sorted_versions(self):
+        tmp = _make_fake_esp_matter_with_data_model(["1.4", "1.3", "1.5.1", "1.6"])
+        self.addCleanup(shutil.rmtree, tmp, True)
+        found = discover_data_model_specification_versions(tmp)
+        self.assertEqual(found, ["1.3", "1.4", "1.5.1", "1.6"])
+
+    def test_highest_version(self):
+        tmp = _make_fake_esp_matter_with_data_model(["1.2", "1.3", "1.5.1", "1.6"])
+        self.addCleanup(shutil.rmtree, tmp, True)
+        self.assertEqual(get_highest_data_model_version(tmp), "1.6")
+
+    def test_ignores_readme_and_non_version_names(self):
+        tmp = _make_fake_esp_matter_with_data_model(["1.4", "1.5"])
+        self.addCleanup(shutil.rmtree, tmp, True)
+        readme = os.path.join(get_chip_data_model_root(tmp), "README.md")
+        with open(readme, "w", encoding="utf-8") as f:
+            f.write("x\n")
+        bad = os.path.join(get_chip_data_model_root(tmp), "not-a-version")
+        os.mkdir(bad)
+        found = discover_data_model_specification_versions(tmp)
+        self.assertEqual(found, ["1.4", "1.5"])
+
+    def test_version_sort_key_orders_numeric_parts(self):
+        self.assertLess(
+            specification_version_sort_key("1.5.1"), specification_version_sort_key("1.6")
+        )
+        self.assertLess(
+            specification_version_sort_key("1.4.1"), specification_version_sort_key("1.4.2")
+        )
 
 
 if __name__ == "__main__":
