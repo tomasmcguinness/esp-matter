@@ -29,12 +29,6 @@ inline constexpr uint32_t Id = 0x0000;
 } /* StateValue */
 } /* attribute */
 
-namespace event {
-namespace StateChange {
-inline constexpr uint32_t Id = 0x00;
-} /* StateChange */
-} /* event */
-
 } /* boolean_state */
 } /* cluster */
 } /* esp_matter */

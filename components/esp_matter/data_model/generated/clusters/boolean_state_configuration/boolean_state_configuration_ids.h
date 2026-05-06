@@ -78,9 +78,6 @@ namespace event {
 namespace AlarmsStateChanged {
 inline constexpr uint32_t Id = 0x00;
 } /* AlarmsStateChanged */
-namespace SensorFault {
-inline constexpr uint32_t Id = 0x01;
-} /* SensorFault */
 } /* event */
 
 } /* boolean_state_configuration */

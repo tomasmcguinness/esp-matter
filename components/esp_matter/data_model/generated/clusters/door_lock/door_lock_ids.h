@@ -27,9 +27,6 @@ namespace feature {
 namespace PINCredential {
 inline constexpr uint32_t Id = 0x1;
 } /* PINCredential */
-namespace RFIDCredential {
-inline constexpr uint32_t Id = 0x2;
-} /* RFIDCredential */
 namespace WeekdayAccessSchedules {
 inline constexpr uint32_t Id = 0x10;
 } /* WeekdayAccessSchedules */
@@ -39,9 +36,6 @@ inline constexpr uint32_t Id = 0x20;
 namespace CredentialOverTheAirAccess {
 inline constexpr uint32_t Id = 0x80;
 } /* CredentialOverTheAirAccess */
-namespace User {
-inline constexpr uint32_t Id = 0x100;
-} /* User */
 namespace YearDayAccessSchedules {
 inline constexpr uint32_t Id = 0x400;
 } /* YearDayAccessSchedules */
@@ -81,15 +75,9 @@ inline constexpr uint32_t Id = 0x0005;
 namespace OpenPeriod {
 inline constexpr uint32_t Id = 0x0006;
 } /* OpenPeriod */
-namespace NumberOfTotalUsersSupported {
-inline constexpr uint32_t Id = 0x0011;
-} /* NumberOfTotalUsersSupported */
 namespace NumberOfPINUsersSupported {
 inline constexpr uint32_t Id = 0x0012;
 } /* NumberOfPINUsersSupported */
-namespace NumberOfRFIDUsersSupported {
-inline constexpr uint32_t Id = 0x0013;
-} /* NumberOfRFIDUsersSupported */
 namespace NumberOfWeekDaySchedulesSupportedPerUser {
 inline constexpr uint32_t Id = 0x0014;
 } /* NumberOfWeekDaySchedulesSupportedPerUser */
@@ -105,18 +93,6 @@ inline constexpr uint32_t Id = 0x0017;
 namespace MinPINCodeLength {
 inline constexpr uint32_t Id = 0x0018;
 } /* MinPINCodeLength */
-namespace MaxRFIDCodeLength {
-inline constexpr uint32_t Id = 0x0019;
-} /* MaxRFIDCodeLength */
-namespace MinRFIDCodeLength {
-inline constexpr uint32_t Id = 0x001A;
-} /* MinRFIDCodeLength */
-namespace CredentialRulesSupport {
-inline constexpr uint32_t Id = 0x001B;
-} /* CredentialRulesSupport */
-namespace NumberOfCredentialsSupportedPerUser {
-inline constexpr uint32_t Id = 0x001C;
-} /* NumberOfCredentialsSupportedPerUser */
 namespace Language {
 inline constexpr uint32_t Id = 0x0021;
 } /* Language */
@@ -153,21 +129,9 @@ inline constexpr uint32_t Id = 0x002B;
 namespace LocalProgrammingFeatures {
 inline constexpr uint32_t Id = 0x002C;
 } /* LocalProgrammingFeatures */
-namespace WrongCodeEntryLimit {
-inline constexpr uint32_t Id = 0x0030;
-} /* WrongCodeEntryLimit */
-namespace UserCodeTemporaryDisableTime {
-inline constexpr uint32_t Id = 0x0031;
-} /* UserCodeTemporaryDisableTime */
-namespace SendPINOverTheAir {
-inline constexpr uint32_t Id = 0x0032;
-} /* SendPINOverTheAir */
 namespace RequirePINforRemoteOperation {
 inline constexpr uint32_t Id = 0x0033;
 } /* RequirePINforRemoteOperation */
-namespace ExpiringUserTimeout {
-inline constexpr uint32_t Id = 0x0035;
-} /* ExpiringUserTimeout */
 namespace AliroReaderVerificationKey {
 inline constexpr uint32_t Id = 0x0080;
 } /* AliroReaderVerificationKey */
@@ -243,33 +207,6 @@ inline constexpr uint32_t Id = 0x12;
 namespace ClearHolidaySchedule {
 inline constexpr uint32_t Id = 0x13;
 } /* ClearHolidaySchedule */
-namespace SetUser {
-inline constexpr uint32_t Id = 0x1A;
-} /* SetUser */
-namespace GetUser {
-inline constexpr uint32_t Id = 0x1B;
-} /* GetUser */
-namespace GetUserResponse {
-inline constexpr uint32_t Id = 0x1C;
-} /* GetUserResponse */
-namespace ClearUser {
-inline constexpr uint32_t Id = 0x1D;
-} /* ClearUser */
-namespace SetCredential {
-inline constexpr uint32_t Id = 0x22;
-} /* SetCredential */
-namespace SetCredentialResponse {
-inline constexpr uint32_t Id = 0x23;
-} /* SetCredentialResponse */
-namespace GetCredentialStatus {
-inline constexpr uint32_t Id = 0x24;
-} /* GetCredentialStatus */
-namespace GetCredentialStatusResponse {
-inline constexpr uint32_t Id = 0x25;
-} /* GetCredentialStatusResponse */
-namespace ClearCredential {
-inline constexpr uint32_t Id = 0x26;
-} /* ClearCredential */
 namespace UnboltDoor {
 inline constexpr uint32_t Id = 0x27;
 } /* UnboltDoor */
@@ -294,9 +231,6 @@ inline constexpr uint32_t Id = 0x02;
 namespace LockOperationError {
 inline constexpr uint32_t Id = 0x03;
 } /* LockOperationError */
-namespace LockUserChange {
-inline constexpr uint32_t Id = 0x04;
-} /* LockUserChange */
 } /* event */
 
 } /* door_lock */

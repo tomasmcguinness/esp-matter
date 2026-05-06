@@ -36,7 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "occupancy_sensing_cluster";
-constexpr uint16_t cluster_revision = 5;
+constexpr uint16_t cluster_revision = 7;
 
 namespace esp_matter {
 namespace cluster {
@@ -273,14 +273,6 @@ attribute_t *create_physical_contact_unoccupied_to_occupied_threshold(cluster_t 
 }
 
 } /* attribute */
-
-namespace event {
-event_t *create_occupancy_changed(cluster_t *cluster)
-{
-    return esp_matter::event::create(cluster, OccupancyChanged::Id);
-}
-
-} /* event */
 
 static void create_default_binding_cluster(endpoint_t *endpoint)
 {

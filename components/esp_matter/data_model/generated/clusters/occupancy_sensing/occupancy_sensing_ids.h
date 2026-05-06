@@ -95,12 +95,6 @@ inline constexpr uint32_t Id = 0x0032;
 } /* PhysicalContactUnoccupiedToOccupiedThreshold */
 } /* attribute */
 
-namespace event {
-namespace OccupancyChanged {
-inline constexpr uint32_t Id = 0x00;
-} /* OccupancyChanged */
-} /* event */
-
 } /* occupancy_sensing */
 } /* cluster */
 } /* esp_matter */

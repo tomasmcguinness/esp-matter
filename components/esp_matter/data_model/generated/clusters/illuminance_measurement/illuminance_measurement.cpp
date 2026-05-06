@@ -26,6 +26,7 @@
 #include <illuminance_measurement_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -35,7 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "illuminance_measurement_cluster";
-constexpr uint16_t cluster_revision = 3;
+constexpr uint16_t cluster_revision = 4;
 
 namespace esp_matter {
 namespace cluster {
@@ -108,6 +109,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         attribute::create_measured_value(cluster, config->measured_value);
         attribute::create_min_measured_value(cluster, config->min_measured_value);
         attribute::create_max_measured_value(cluster, config->max_measured_value);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterIlluminanceMeasurementClusterServerInitCallback,
+                                                 ESPMatterIlluminanceMeasurementClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

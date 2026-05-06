@@ -22,10 +22,12 @@
 #include <app-common/zap-generated/callback.h>
 #include <app/InteractionModelEngine.h>
 #include <zap_common/app/PluginApplicationCallbacks.h>
+#include <esp_matter_delegate_callbacks.h>
 #include <temperature_control.h>
 #include <temperature_control_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -33,20 +35,10 @@ using chip::app::DataModel::Decode;
 using chip::TLV::TLVReader;
 using namespace esp_matter;
 using namespace esp_matter::cluster;
+using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "temperature_control_cluster";
 constexpr uint16_t cluster_revision = 1;
-
-static esp_err_t esp_matter_command_callback_set_temperature(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                             void *opaque_ptr)
-{
-    chip::app::Clusters::TemperatureControl::Commands::SetTemperature::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfTemperatureControlClusterSetTemperatureCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
 
 namespace esp_matter {
 namespace cluster {
@@ -168,7 +160,7 @@ attribute_t *create_supported_temperature_levels(cluster_t *cluster, uint8_t *va
 namespace command {
 command_t *create_set_temperature(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, SetTemperature::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_set_temperature);
+    return esp_matter::command::create(cluster, SetTemperature::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 } /* command */
@@ -189,6 +181,10 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
     VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, temperature_control::Id));
     if (flags & CLUSTER_FLAG_SERVER) {
         VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
+        if (config->delegate != nullptr) {
+            static const auto delegate_init_cb = TemperatureControlDelegateInitCB;
+            set_delegate_and_init_callback(cluster, delegate_init_cb, config->delegate);
+        }
         static const auto plugin_server_init_cb = CALL_ONCE(MatterTemperatureControlPluginServerInitCallback);
         set_plugin_server_init_callback(cluster, plugin_server_init_cb);
         add_function_list(cluster, function_list, function_flags);
@@ -212,6 +208,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
             VerifyOrReturnValue(feature::temperature_step::add(cluster, &(config->features.temperature_step)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         command::create_set_temperature(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterTemperatureControlClusterServerInitCallback,
+                                                 ESPMatterTemperatureControlClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

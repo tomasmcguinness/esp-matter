@@ -27,6 +27,7 @@
 #include <valve_configuration_and_control_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -38,28 +39,6 @@ using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "valve_configuration_and_control_cluster";
 constexpr uint16_t cluster_revision = 1;
-
-static esp_err_t esp_matter_command_callback_open(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                  void *opaque_ptr)
-{
-    chip::app::Clusters::ValveConfigurationAndControl::Commands::Open::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfValveConfigurationAndControlClusterOpenCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_close(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                   void *opaque_ptr)
-{
-    chip::app::Clusters::ValveConfigurationAndControl::Commands::Close::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfValveConfigurationAndControlClusterCloseCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
 
 namespace esp_matter {
 namespace cluster {
@@ -129,7 +108,9 @@ attribute_t *create_auto_close_time(cluster_t *cluster, nullable<uint64_t> value
 
 attribute_t *create_remaining_duration(cluster_t *cluster, nullable<uint32_t> value)
 {
-    return esp_matter::attribute::create(cluster, RemainingDuration::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY | ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint32(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, RemainingDuration::Id, ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint32(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint32(0), esp_matter_nullable_uint32(4294967294));
+    return attribute;
 }
 
 attribute_t *create_current_state(cluster_t *cluster, nullable<uint8_t> value)
@@ -189,12 +170,12 @@ attribute_t *create_level_step(cluster_t *cluster, uint8_t value)
 namespace command {
 command_t *create_open(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Open::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_open);
+    return esp_matter::command::create(cluster, Open::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_close(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, Close::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_close);
+    return esp_matter::command::create(cluster, Close::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 } /* command */
@@ -244,11 +225,14 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         attribute::create_open_duration(cluster, config->open_duration);
         attribute::create_default_open_duration(cluster, config->default_open_duration);
+        attribute::create_remaining_duration(cluster, config->remaining_duration);
         attribute::create_current_state(cluster, config->current_state);
         attribute::create_target_state(cluster, config->target_state);
-        attribute::create_remaining_duration(cluster, 0);
         command::create_open(cluster);
         command::create_close(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterValveConfigurationAndControlClusterServerInitCallback,
+                                                 ESPMatterValveConfigurationAndControlClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

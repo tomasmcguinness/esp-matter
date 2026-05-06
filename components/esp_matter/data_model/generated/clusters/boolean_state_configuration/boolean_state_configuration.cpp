@@ -38,7 +38,7 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "boolean_state_configuration_cluster";
-constexpr uint16_t cluster_revision = 1;
+constexpr uint16_t cluster_revision = 2;
 
 namespace esp_matter {
 namespace cluster {
@@ -216,11 +216,6 @@ event_t *create_alarms_state_changed(cluster_t *cluster)
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(((has_feature(visual)) || (has_feature(audible))), NULL);
     return esp_matter::event::create(cluster, AlarmsStateChanged::Id);
-}
-
-event_t *create_sensor_fault(cluster_t *cluster)
-{
-    return esp_matter::event::create(cluster, SensorFault::Id);
 }
 
 } /* event */

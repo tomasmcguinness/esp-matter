@@ -81,7 +81,6 @@ command_t *create_enable_disable_alarm(cluster_t *cluster);
 
 namespace event {
 event_t *create_alarms_state_changed(cluster_t *cluster);
-event_t *create_sensor_fault(cluster_t *cluster);
 } /* event */
 
 typedef struct config {

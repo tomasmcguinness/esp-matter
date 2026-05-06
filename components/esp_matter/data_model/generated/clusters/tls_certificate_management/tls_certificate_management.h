@@ -47,7 +47,9 @@ command_t *create_remove_client_certificate(cluster_t *cluster);
 } /* command */
 
 typedef struct config {
-    config() {}
+    uint8_t max_root_certificates;
+    uint8_t max_client_certificates;
+    config() : max_root_certificates(0), max_client_certificates(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

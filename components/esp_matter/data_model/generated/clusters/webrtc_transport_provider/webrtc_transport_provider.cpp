@@ -36,7 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "webrtc_transport_provider_cluster";
-constexpr uint16_t cluster_revision = 1;
+constexpr uint16_t cluster_revision = 2;
 
 namespace esp_matter {
 namespace cluster {

@@ -48,28 +48,11 @@ typedef struct config {
     uint8_t occupancy;
     int16_t unoccupied_cooling_setpoint;
     int16_t unoccupied_heating_setpoint;
-    nullable<uint8_t> unoccupied_setback;
-    nullable<uint8_t> unoccupied_setback_min;
-    nullable<uint8_t> unoccupied_setback_max;
-    config() : occupancy(0), unoccupied_cooling_setpoint(2600), unoccupied_heating_setpoint(2000), unoccupied_setback(0), unoccupied_setback_min(0), unoccupied_setback_max(0) {}
+    config() : occupancy(0), unoccupied_cooling_setpoint(2600), unoccupied_heating_setpoint(2000) {}
 } config_t;
 uint32_t get_id();
 esp_err_t add(cluster_t *cluster, config_t *config);
 } /* occupancy */
-
-namespace setback {
-typedef struct config {
-    nullable<uint8_t> occupied_setback;
-    nullable<uint8_t> occupied_setback_min;
-    nullable<uint8_t> occupied_setback_max;
-    nullable<uint8_t> unoccupied_setback;
-    nullable<uint8_t> unoccupied_setback_min;
-    nullable<uint8_t> unoccupied_setback_max;
-    config() : occupied_setback(0), occupied_setback_min(0), occupied_setback_max(0), unoccupied_setback(0), unoccupied_setback_min(0), unoccupied_setback_max(0) {}
-} config_t;
-uint32_t get_id();
-esp_err_t add(cluster_t *cluster, config_t *config);
-} /* setback */
 
 namespace auto_mode {
 typedef struct config {
@@ -112,8 +95,6 @@ attribute_t *create_abs_min_heat_setpoint_limit(cluster_t *cluster, int16_t valu
 attribute_t *create_abs_max_heat_setpoint_limit(cluster_t *cluster, int16_t value);
 attribute_t *create_abs_min_cool_setpoint_limit(cluster_t *cluster, int16_t value);
 attribute_t *create_abs_max_cool_setpoint_limit(cluster_t *cluster, int16_t value);
-attribute_t *create_pi_cooling_demand(cluster_t *cluster, uint8_t value);
-attribute_t *create_pi_heating_demand(cluster_t *cluster, uint8_t value);
 attribute_t *create_local_temperature_calibration(cluster_t *cluster, int8_t value);
 attribute_t *create_occupied_cooling_setpoint(cluster_t *cluster, int16_t value);
 attribute_t *create_occupied_heating_setpoint(cluster_t *cluster, int16_t value);
@@ -127,20 +108,12 @@ attribute_t *create_min_setpoint_dead_band(cluster_t *cluster, int8_t value);
 attribute_t *create_remote_sensing(cluster_t *cluster, uint8_t value);
 attribute_t *create_control_sequence_of_operation(cluster_t *cluster, uint8_t value);
 attribute_t *create_system_mode(cluster_t *cluster, uint8_t value);
-attribute_t *create_thermostat_running_mode(cluster_t *cluster, uint8_t value);
 attribute_t *create_temperature_setpoint_hold(cluster_t *cluster, uint8_t value);
 attribute_t *create_temperature_setpoint_hold_duration(cluster_t *cluster, nullable<uint16_t> value);
-attribute_t *create_thermostat_programming_operation_mode(cluster_t *cluster, uint8_t value);
 attribute_t *create_thermostat_running_state(cluster_t *cluster, uint16_t value);
 attribute_t *create_setpoint_change_source(cluster_t *cluster, uint8_t value);
 attribute_t *create_setpoint_change_amount(cluster_t *cluster, nullable<int16_t> value);
 attribute_t *create_setpoint_change_source_timestamp(cluster_t *cluster, uint32_t value);
-attribute_t *create_occupied_setback(cluster_t *cluster, nullable<uint8_t> value);
-attribute_t *create_occupied_setback_min(cluster_t *cluster, nullable<uint8_t> value);
-attribute_t *create_occupied_setback_max(cluster_t *cluster, nullable<uint8_t> value);
-attribute_t *create_unoccupied_setback(cluster_t *cluster, nullable<uint8_t> value);
-attribute_t *create_unoccupied_setback_min(cluster_t *cluster, nullable<uint8_t> value);
-attribute_t *create_unoccupied_setback_max(cluster_t *cluster, nullable<uint8_t> value);
 attribute_t *create_emergency_heat_delta(cluster_t *cluster, uint8_t value);
 attribute_t *create_ac_type(cluster_t *cluster, uint8_t value);
 attribute_t *create_ac_capacity(cluster_t *cluster, uint16_t value);
@@ -178,7 +151,6 @@ typedef struct config {
         feature::heating::config_t heating;
         feature::cooling::config_t cooling;
         feature::occupancy::config_t occupancy;
-        feature::setback::config_t setback;
         feature::auto_mode::config_t auto_mode;
         feature::matter_schedule_configuration::config_t matter_schedule_configuration;
     } features;

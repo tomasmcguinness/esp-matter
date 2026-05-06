@@ -28,7 +28,7 @@
 #include <esp_matter_core.h>
 
 #define ESP_MATTER_AUDIO_DOORBELL_DEVICE_TYPE_ID 0x0141
-#define ESP_MATTER_AUDIO_DOORBELL_DEVICE_TYPE_VERSION 1
+#define ESP_MATTER_AUDIO_DOORBELL_DEVICE_TYPE_VERSION 2
 
 namespace esp_matter {
 namespace endpoint {
@@ -40,6 +40,7 @@ typedef struct config {
     cluster::identify::config_t identify;
     cluster::switch_cluster::config_t switch_cluster;
     cluster::camera_av_stream_management::config_t camera_av_stream_management;
+    cluster::camera_av_stream_management::feature::audio::config_t camera_av_stream_management_audio;
     cluster::webrtc_transport_provider::config_t webrtc_transport_provider;
 } config_t;
 

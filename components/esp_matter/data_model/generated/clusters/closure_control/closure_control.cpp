@@ -27,6 +27,7 @@
 #include <closure_control_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -65,11 +66,12 @@ uint32_t get_id()
     return MotionLatching::Id;
 }
 
-esp_err_t add(cluster_t *cluster)
+esp_err_t add(cluster_t *cluster, config_t *config)
 {
     VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
+    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
     update_feature_map(cluster, get_id());
-    attribute::create_latch_control_modes(cluster, 0);
+    attribute::create_latch_control_modes(cluster, config->latch_control_modes);
 
     return ESP_OK;
 }
@@ -203,12 +205,16 @@ esp_err_t add(cluster_t *cluster)
 namespace attribute {
 attribute_t *create_countdown_time(cluster_t *cluster, nullable<uint32_t> value)
 {
-    return esp_matter::attribute::create(cluster, CountdownTime::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY | ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint32(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, CountdownTime::Id, ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint32(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint32(0), esp_matter_nullable_uint32(259200));
+    return attribute;
 }
 
 attribute_t *create_main_state(cluster_t *cluster, uint8_t value)
 {
-    return esp_matter::attribute::create(cluster, MainState::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_enum8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, MainState::Id, ATTRIBUTE_FLAG_NONE, esp_matter_enum8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_enum8(0), esp_matter_enum8(7));
+    return attribute;
 }
 
 attribute_t *create_current_error_list(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
@@ -230,7 +236,9 @@ attribute_t *create_latch_control_modes(cluster_t *cluster, uint8_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(motion_latching), NULL);
-    return esp_matter::attribute::create(cluster, LatchControlModes::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_bitmap8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, LatchControlModes::Id, ATTRIBUTE_FLAG_NONE, esp_matter_bitmap8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_bitmap8(0), esp_matter_bitmap8(3));
+    return attribute;
 }
 
 } /* attribute */
@@ -313,7 +321,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
-        attribute::create_main_state(cluster, 0);
+        attribute::create_main_state(cluster, config->main_state);
         attribute::create_current_error_list(cluster, NULL, 0, 0);
         attribute::create_overall_current_state(cluster, NULL, 0, 0);
         attribute::create_overall_target_state(cluster, NULL, 0, 0);
@@ -325,7 +333,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
             VerifyOrReturnValue(feature::positioning::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::motion_latching::get_id()) {
-            VerifyOrReturnValue(feature::motion_latching::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            VerifyOrReturnValue(feature::motion_latching::add(cluster, &(config->features.motion_latching)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::instantaneous::get_id()) {
             VerifyOrReturnValue(feature::instantaneous::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
@@ -354,6 +362,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         event::create_operational_error(cluster);
         event::create_movement_completed(cluster);
         event::create_secure_state_changed(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterClosureControlClusterServerInitCallback,
+                                                 ESPMatterClosureControlClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

@@ -36,7 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "basic_information_cluster";
-constexpr uint16_t cluster_revision = 5;
+constexpr uint16_t cluster_revision = 6;
 
 namespace esp_matter {
 namespace cluster {
@@ -237,7 +237,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         attribute::create_hardware_version_string(cluster, config->hardware_version_string, sizeof(config->hardware_version_string));
         attribute::create_software_version(cluster, config->software_version);
         attribute::create_software_version_string(cluster, config->software_version_string, sizeof(config->software_version_string));
-        attribute::create_unique_id(cluster, config->unique_id, sizeof(config->unique_id));
         attribute::create_specification_version(cluster, config->specification_version);
         attribute::create_max_paths_per_invoke(cluster, config->max_paths_per_invoke);
         attribute::create_capability_minima(cluster, NULL, 0, 0);

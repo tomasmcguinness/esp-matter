@@ -67,13 +67,14 @@ command_t *create_set_temperature(cluster_t *cluster);
 } /* command */
 
 typedef struct config {
+    void *delegate;
     struct {
         feature::temperature_number::config_t temperature_number;
         feature::temperature_level::config_t temperature_level;
         feature::temperature_step::config_t temperature_step;
     } features;
     uint32_t feature_flags;
-    config() : feature_flags(0) {}
+    config() : delegate(nullptr), feature_flags(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

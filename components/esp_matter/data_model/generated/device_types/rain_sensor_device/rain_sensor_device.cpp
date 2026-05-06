@@ -54,9 +54,7 @@ esp_err_t add(endpoint_t *endpoint, config_t *config)
     VerifyOrReturnError(err == ESP_OK, err);
 
     cluster::identify::create(endpoint, &(config->identify), CLUSTER_FLAG_SERVER);
-    cluster_t *boolean_state = cluster::boolean_state::create(endpoint, &(config->boolean_state), CLUSTER_FLAG_SERVER);
-    VerifyOrReturnValue(boolean_state != NULL, ESP_FAIL, ESP_LOGE("rain_sensor", "Failed to create cluster: boolean_state"));
-    cluster::boolean_state::event::create_state_change(boolean_state);
+    cluster::boolean_state::create(endpoint, &(config->boolean_state), CLUSTER_FLAG_SERVER);
     return ESP_OK;
 }
 
