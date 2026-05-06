@@ -17,12 +17,9 @@ if (CONFIG_ENABLE_ESP_DIAGNOSTICS_TRACE)
     list(APPEND SRC_DIRS_LIST "${MATTER_SDK_PATH}/examples/platform/esp32/diagnostics")
 endif (CONFIG_ENABLE_ESP_DIAGNOSTICS_TRACE)
 
-set(PRIV_REQUIRES_LIST esp_rcp_update)
-
 idf_component_register(SRC_DIRS          ${SRC_DIRS_LIST}
                       PRIV_INCLUDE_DIRS  "." "${ESP_MATTER_PATH}/examples/common/utils" ${PRIV_INCLUDE_DIRS_LIST}
                       INCLUDE_DIRS       ${INCLUDE_DIRS_LIST}
-                      PRIV_REQUIRES      ${PRIV_REQUIRES_LIST}
                       LDFRAGMENTS        "${ldfragments}")
 
 target_compile_options(${COMPONENT_LIB} PRIVATE "-DCHIP_HAVE_CONFIG_H")

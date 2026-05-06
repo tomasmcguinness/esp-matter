@@ -55,160 +55,142 @@ Protocols::InteractionModel::Status MockEnergyEVSEDelegate::ClearTargets()
     return Protocols::InteractionModel::Status::Success;
 }
 
-StateEnum MockEnergyEVSEDelegate::GetState()
+void MockEnergyEVSEDelegate::OnStateChanged(StateEnum newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return StateEnum::kUnknownEnumValue;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-SupplyStateEnum MockEnergyEVSEDelegate::GetSupplyState()
+void MockEnergyEVSEDelegate::OnSupplyStateChanged(SupplyStateEnum newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return SupplyStateEnum::kUnknownEnumValue;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-FaultStateEnum MockEnergyEVSEDelegate::GetFaultState()
+void MockEnergyEVSEDelegate::OnFaultStateChanged(FaultStateEnum newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return FaultStateEnum::kNoError;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint32_t> MockEnergyEVSEDelegate::GetChargingEnabledUntil()
+void MockEnergyEVSEDelegate::OnChargingEnabledUntilChanged(DataModel::Nullable<uint32_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint32_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint32_t> MockEnergyEVSEDelegate::GetDischargingEnabledUntil()
+void MockEnergyEVSEDelegate::OnDischargingEnabledUntilChanged(DataModel::Nullable<uint32_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint32_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-int64_t MockEnergyEVSEDelegate::GetCircuitCapacity()
+void MockEnergyEVSEDelegate::OnCircuitCapacityChanged(int64_t newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return 0;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-int64_t MockEnergyEVSEDelegate::GetMinimumChargeCurrent()
+void MockEnergyEVSEDelegate::OnMinimumChargeCurrentChanged(int64_t newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return 0;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-int64_t MockEnergyEVSEDelegate::GetMaximumChargeCurrent()
+void MockEnergyEVSEDelegate::OnMaximumChargeCurrentChanged(int64_t newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return 0;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-int64_t MockEnergyEVSEDelegate::GetMaximumDischargeCurrent()
+void MockEnergyEVSEDelegate::OnMaximumDischargeCurrentChanged(int64_t newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return 0;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-int64_t MockEnergyEVSEDelegate::GetUserMaximumChargeCurrent()
+void MockEnergyEVSEDelegate::OnUserMaximumChargeCurrentChanged(int64_t newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return 0;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-uint32_t MockEnergyEVSEDelegate::GetRandomizationDelayWindow()
+void MockEnergyEVSEDelegate::OnRandomizationDelayWindowChanged(uint32_t newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return 0;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint32_t> MockEnergyEVSEDelegate::GetNextChargeStartTime()
+void MockEnergyEVSEDelegate::OnNextChargeStartTimeChanged(DataModel::Nullable<uint32_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint32_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint32_t> MockEnergyEVSEDelegate::GetNextChargeTargetTime()
+void MockEnergyEVSEDelegate::OnNextChargeTargetTimeChanged(DataModel::Nullable<uint32_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint32_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<int64_t> MockEnergyEVSEDelegate::GetNextChargeRequiredEnergy()
+void MockEnergyEVSEDelegate::OnNextChargeRequiredEnergyChanged(DataModel::Nullable<int64_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<int64_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<Percent> MockEnergyEVSEDelegate::GetNextChargeTargetSoC()
+void MockEnergyEVSEDelegate::OnNextChargeTargetSoCChanged(DataModel::Nullable<Percent> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<Percent>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint16_t> MockEnergyEVSEDelegate::GetApproximateEVEfficiency()
+void MockEnergyEVSEDelegate::OnApproximateEVEfficiencyChanged(DataModel::Nullable<uint16_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint16_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<Percent> MockEnergyEVSEDelegate::GetStateOfCharge()
+void MockEnergyEVSEDelegate::OnStateOfChargeChanged(DataModel::Nullable<Percent> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<Percent>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<int64_t> MockEnergyEVSEDelegate::GetBatteryCapacity()
+void MockEnergyEVSEDelegate::OnBatteryCapacityChanged(DataModel::Nullable<int64_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<int64_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<CharSpan> MockEnergyEVSEDelegate::GetVehicleID()
+void MockEnergyEVSEDelegate::OnVehicleIDChanged(DataModel::Nullable<CharSpan> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<CharSpan>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint32_t> MockEnergyEVSEDelegate::GetSessionID()
+void MockEnergyEVSEDelegate::OnSessionIDChanged(DataModel::Nullable<uint32_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint32_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<uint32_t> MockEnergyEVSEDelegate::GetSessionDuration()
+void MockEnergyEVSEDelegate::OnSessionDurationChanged(DataModel::Nullable<uint32_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<uint32_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<int64_t> MockEnergyEVSEDelegate::GetSessionEnergyCharged()
+void MockEnergyEVSEDelegate::OnSessionEnergyChargedChanged(DataModel::Nullable<int64_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<int64_t>();
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
-DataModel::Nullable<int64_t> MockEnergyEVSEDelegate::GetSessionEnergyDischarged()
+void MockEnergyEVSEDelegate::OnSessionEnergyDischargedChanged(DataModel::Nullable<int64_t> newValue)
 {
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return DataModel::Nullable<int64_t>();
-}
-
-CHIP_ERROR MockEnergyEVSEDelegate::SetUserMaximumChargeCurrent(int64_t aNewValue)
-{
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR MockEnergyEVSEDelegate::SetRandomizationDelayWindow(uint32_t aNewValue)
-{
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR MockEnergyEVSEDelegate::SetApproximateEVEfficiency(DataModel::Nullable<uint16_t> aNewValue)
-{
-    ESP_LOGI(LOG_TAG, "%s is not implemented", __func__);
-    return CHIP_NO_ERROR;
+    ESP_LOGD(LOG_TAG, "%s", __func__);
+    (void) newValue;
 }
 
 } // namespace EnergyEvse

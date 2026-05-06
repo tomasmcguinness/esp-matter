@@ -5,6 +5,8 @@ MATTER data model implements. It has been tested with multiple ecosystem Apple, 
 
 See the [docs](https://docs.espressif.com/projects/esp-matter/en/latest/esp32/developing.html) for more information about building and flashing the firmware.
 
+**ESP32-C6:** With factory options enabled, this app exceeds the default partition size on ESP32-C6 (size overflow). A custom partition table `partitions.c6.csv` is therefore used for the C6 target. On ESP32-C6 this example is for **demonstration only** and is **not OTA-able** (single app partition, no OTA slots).
+
 **This example only implements mandatory clusters, attributes, commands, events, etc from the spec.**
 If you want to add any optional data model bits please add them in [create api](https://github.com/espressif/esp-matter/blob/0c4e0a07c804102f25460ba7e2442f97d109aa0c/examples/all_device_types_app/main/esp_matter_console_helpers.cpp#L173) under your desired device type case using [data model creation development guide](https://docs.espressif.com/projects/esp-matter/en/latest/esp32/developing.html#developing-your-product).
 

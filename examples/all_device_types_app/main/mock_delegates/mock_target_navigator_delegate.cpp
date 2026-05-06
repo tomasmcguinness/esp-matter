@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_target_navigator_delegate.h"
 
@@ -36,7 +37,7 @@ void MockTargetNavigatorDelegate::HandleNavigateTarget(CommandResponseHelper<Com
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::NavigateTargetResponse::Type response;
     response.status = TargetNavigatorStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 uint16_t MockTargetNavigatorDelegate::GetClusterRevision(chip::EndpointId endpoint)

@@ -227,7 +227,7 @@ static_library("ESP32_custom") {
     ]
   }
 
-  if (chip_enable_openthread) {
+  if (chip_enable_thread) {
     sources += [
       "${chip_root}/src/platform/OpenThread/GenericNetworkCommissioningThreadDriver.cpp",
       "${chip_root}/src/platform/OpenThread/GenericNetworkCommissioningThreadDriver.h",

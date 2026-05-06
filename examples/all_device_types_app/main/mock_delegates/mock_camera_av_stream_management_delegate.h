@@ -61,10 +61,6 @@ public:
     // Persistent attributes callback
     CHIP_ERROR PersistentAttributesLoadedCallback() override;
 
-    // Transport stream handlers
-    CHIP_ERROR OnTransportAcquireAudioVideoStreams(uint16_t audioStreamID, uint16_t videoStreamID) override;
-    CHIP_ERROR OnTransportReleaseAudioVideoStreams(uint16_t audioStreamID, uint16_t videoStreamID) override;
-
     // Stream accessors
     const std::vector<VideoStreamStruct>  &GetAllocatedVideoStreams() const override;
     const std::vector<AudioStreamStruct>  &GetAllocatedAudioStreams() const override;

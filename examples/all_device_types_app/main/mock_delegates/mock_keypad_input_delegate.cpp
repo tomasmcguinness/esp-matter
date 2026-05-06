@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_keypad_input_delegate.h"
 
@@ -21,7 +22,7 @@ void MockKeypadInputDelegate::HandleSendKey(CommandResponseHelper<Commands::Send
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::SendKeyResponse::Type response;
     response.status = KeypadInputStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 uint32_t MockKeypadInputDelegate::GetFeatureMap(chip::EndpointId endpoint)

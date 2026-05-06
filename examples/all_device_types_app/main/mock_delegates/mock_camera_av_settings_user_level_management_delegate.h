@@ -62,10 +62,6 @@ public:
     // Persistent attributes callback
     CHIP_ERROR PersistentAttributesLoadedCallback() override;
 
-    // Load handlers
-    CHIP_ERROR LoadMPTZPresets(std::vector<MPTZPresetHelper>  &mptzPresetHelpers) override;
-    CHIP_ERROR LoadDPTZStreams(std::vector<DPTZStruct>  &dptzStreams) override;
-
 private:
     static constexpr const char * LOG_TAG = "MockCameraAVSettingsUserLevelMgmtDelegate";
 };

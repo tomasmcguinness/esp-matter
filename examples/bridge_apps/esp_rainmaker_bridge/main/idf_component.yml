@@ -1,10 +1,6 @@
 dependencies:
   espressif/esp_rainmaker:
     version: "~1.7.9" # Will update to latest version after the esp_rcp_update update to latest version.
-  espressif/esp_rcp_update:
-    version: "~1.6.0"
-    rules:
-      - if: "idf_version >=5.0"
   espressif/qrcode:
     version: "*"
   espressif/button:

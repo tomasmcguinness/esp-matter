@@ -19,15 +19,18 @@
 
 #include "webrtc-kvs_esp_port.h"
 #include "webrtc-kvs_esp_port_utils.h"
+#include <app/data-model/List.h>
 #include <app/server/Server.h>
 #include <controller/InvokeInteraction.h>
 #include <iostream>
+#include <lib/core/CHIPError.h>
 #include <lib/support/logging/CHIPLogging.h>
 #include <webrtc-transport.h>
 #include <webrtc_bridge.h>
 
 using namespace chip;
 using namespace chip::app;
+using namespace chip::app::DataModel;
 using namespace chip::app::Clusters;
 using namespace chip::app::Clusters::WebRTCTransportProvider;
 
@@ -73,33 +76,24 @@ WebRTCProviderManager::HandleSolicitOffer(const OfferRequestArgs  &args, WebRTCS
     outSession.peerEndpointID = args.originatingEndpointId;
     outSession.streamUsage    = args.streamUsage;
     outSession.fabricIndex    = args.fabricIndex;
-    uint16_t videoStreamID    = 0;
-    uint16_t audioStreamID    = 0;
 
-    // Resolve or allocate a VIDEO stream
-    if (args.videoStreamId.HasValue()) {
-        if (args.videoStreamId.Value().IsNull()) {
-            // TODO: Automatically select the closest matching video stream for the
-            // StreamUsage requested by looking at the and the server MAY allocate a
-            // new video stream if there are available resources.
-        } else {
-            outSession.videoStreamID = args.videoStreamId.Value();
-            videoStreamID            = args.videoStreamId.Value().Value();
-        }
+    std::vector<uint16_t> videoStreams;
+    std::vector<uint16_t> audioStreams;
+
+    if (args.videoStreams.HasValue()) {
+        videoStreams = args.videoStreams.Value();
+    }
+    if (args.audioStreams.HasValue()) {
+        audioStreams = args.audioStreams.Value();
+    }
+
+    if (!videoStreams.empty()) {
+        outSession.videoStreamID.SetNonNull(videoStreams[0]);
     } else {
         outSession.videoStreamID.SetNull();
     }
-
-    // Resolve or allocate an AUDIO stream
-    if (args.audioStreamId.HasValue()) {
-        if (args.audioStreamId.Value().IsNull()) {
-            // TODO: Automatically select the closest matching audio stream for the
-            // StreamUsage requested and the server MAY allocate a new audio stream if
-            // there are available resources.
-        } else {
-            outSession.audioStreamID = args.audioStreamId.Value();
-            audioStreamID            = args.audioStreamId.Value().Value();
-        }
+    if (!audioStreams.empty()) {
+        outSession.audioStreamID.SetNonNull(audioStreams[0]);
     } else {
         outSession.audioStreamID.SetNull();
     }
@@ -110,13 +104,13 @@ WebRTCProviderManager::HandleSolicitOffer(const OfferRequestArgs  &args, WebRTCS
 
     WebrtcTransport * transport = GetTransport(args.sessionId);
     WebrtcTransport::RequestArgs requestArgs;
-    requestArgs.sessionId             = args.sessionId;
-    requestArgs.fabricIndex           = args.fabricIndex;
-    requestArgs.peerNodeId            = args.peerNodeId;
-    requestArgs.originatingEndpointId = args.originatingEndpointId;
-    requestArgs.videoStreamId         = videoStreamID;
-    requestArgs.audioStreamId         = audioStreamID;
-    requestArgs.peerId                = ScopedNodeId(args.peerNodeId, args.fabricIndex);
+    requestArgs.sessionId               = args.sessionId;
+    requestArgs.fabricIndex             = args.fabricIndex;
+    requestArgs.peerNodeId              = args.peerNodeId;
+    requestArgs.originatingEndpointId   = args.originatingEndpointId;
+    requestArgs.videoStreams            = videoStreams;
+    requestArgs.audioStreams            = audioStreams;
+    requestArgs.peerId                  = ScopedNodeId(args.peerNodeId, args.fabricIndex);
 
     if (transport == nullptr) {
         mWebrtcTransportMap[args.sessionId]                            = std::unique_ptr<WebrtcTransport>(new WebrtcTransport());
@@ -132,6 +126,16 @@ WebRTCProviderManager::HandleSolicitOffer(const OfferRequestArgs  &args, WebRTCS
     }
 
     transport->SetRequestArgs(requestArgs);
+
+    const auto  &storedArgs = transport->GetRequestArgs();
+    if (!storedArgs.videoStreams.empty()) {
+        outSession.videoStreams.SetValue(
+                      List<const uint16_t>(storedArgs.videoStreams.data(), storedArgs.videoStreams.size()));
+    }
+    if (!storedArgs.audioStreams.empty()) {
+        outSession.audioStreams.SetValue(
+                      List<const uint16_t>(storedArgs.audioStreams.data(), storedArgs.audioStreams.size()));
+    }
 
     // Check resource availability before proceeding
     // If we cannot allocate resources, send End command with OutOfResources
@@ -155,7 +159,7 @@ WebRTCProviderManager::HandleSolicitOffer(const OfferRequestArgs  &args, WebRTCS
 
     // Acquire the Video and Audio Streams from the CameraAVStreamManagement
     // cluster and update the reference counts.
-    AcquireAudioVideoStreams(args.sessionId);
+    TEMPORARY_RETURN_IGNORED AcquireAudioVideoStreams(args.sessionId);
 
     transport->MoveToState(WebrtcTransport::State::SendingOffer);
 
@@ -207,31 +211,24 @@ WebRTCProviderManager::HandleProvideOffer(const ProvideOfferRequestArgs  &args, 
     outSession.peerEndpointID = args.originatingEndpointId;
     outSession.streamUsage    = args.streamUsage;
     outSession.fabricIndex    = args.fabricIndex;
-    uint16_t videoStreamID    = 0;
-    uint16_t audioStreamID    = 0;
 
-    // Resolve or allocate a VIDEO stream
-    if (args.videoStreamId.HasValue()) {
-        if (args.videoStreamId.Value().IsNull()) {
-            // TODO: Automatically select the closest matching video stream for the
-            // StreamUsage requested.
-        } else {
-            outSession.videoStreamID = args.videoStreamId.Value();
-            videoStreamID            = args.videoStreamId.Value().Value();
-        }
+    std::vector<uint16_t> videoStreams;
+    std::vector<uint16_t> audioStreams;
+
+    if (args.videoStreams.HasValue()) {
+        videoStreams = args.videoStreams.Value();
+    }
+    if (args.audioStreams.HasValue()) {
+        audioStreams = args.audioStreams.Value();
+    }
+
+    if (!videoStreams.empty()) {
+        outSession.videoStreamID.SetNonNull(videoStreams[0]);
     } else {
         outSession.videoStreamID.SetNull();
     }
-
-    // Resolve or allocate an AUDIO stream
-    if (args.audioStreamId.HasValue()) {
-        if (args.audioStreamId.Value().IsNull()) {
-            // TODO: Automatically select the closest matching audio stream for the
-            // StreamUsage requested
-        } else {
-            outSession.audioStreamID = args.audioStreamId.Value();
-            audioStreamID            = args.audioStreamId.Value().Value();
-        }
+    if (!audioStreams.empty()) {
+        outSession.audioStreamID.SetNonNull(audioStreams[0]);
     } else {
         outSession.audioStreamID.SetNull();
     }
@@ -239,13 +236,13 @@ WebRTCProviderManager::HandleProvideOffer(const ProvideOfferRequestArgs  &args, 
     // Process the SDP Offer, begin the ICE Candidate gathering phase, create the
     // SDP Answer, and invoke Answer.
     WebrtcTransport::RequestArgs requestArgs;
-    requestArgs.sessionId             = args.sessionId;
-    requestArgs.fabricIndex           = args.fabricIndex;
-    requestArgs.peerNodeId            = args.peerNodeId;
-    requestArgs.originatingEndpointId = args.originatingEndpointId;
-    requestArgs.videoStreamId         = videoStreamID;
-    requestArgs.audioStreamId         = audioStreamID;
-    requestArgs.peerId                = ScopedNodeId(args.peerNodeId, args.fabricIndex);
+    requestArgs.sessionId               = args.sessionId;
+    requestArgs.fabricIndex             = args.fabricIndex;
+    requestArgs.peerNodeId              = args.peerNodeId;
+    requestArgs.originatingEndpointId   = args.originatingEndpointId;
+    requestArgs.videoStreams            = videoStreams;
+    requestArgs.audioStreams            = audioStreams;
+    requestArgs.peerId                  = ScopedNodeId(args.peerNodeId, args.fabricIndex);
 
     WebrtcTransport * transport = GetTransport(args.sessionId);
     if (transport == nullptr) {
@@ -273,12 +270,23 @@ WebRTCProviderManager::HandleProvideOffer(const ProvideOfferRequestArgs  &args, 
     }
 
     transport->SetRequestArgs(requestArgs);
+
+    const auto  &storedArgs = transport->GetRequestArgs();
+    if (!storedArgs.videoStreams.empty()) {
+        outSession.videoStreams.SetValue(
+                      List<const uint16_t>(storedArgs.videoStreams.data(), storedArgs.videoStreams.size()));
+    }
+    if (!storedArgs.audioStreams.empty()) {
+        outSession.audioStreams.SetValue(
+                      List<const uint16_t>(storedArgs.audioStreams.data(), storedArgs.audioStreams.size()));
+    }
+
     transport->Start();
     transport->AddTracks();
 
     // Acquire the Video and Audio Streams from the CameraAVStreamManagement
     // cluster and update the reference counts.
-    AcquireAudioVideoStreams(args.sessionId);
+    TEMPORARY_RETURN_IGNORED AcquireAudioVideoStreams(args.sessionId);
 
     transport->MoveToState(WebrtcTransport::State::SendingAnswer);
 
@@ -363,39 +371,23 @@ CHIP_ERROR WebRTCProviderManager::HandleProvideICECandidates(uint16_t sessionId,
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR WebRTCProviderManager::HandleEndSession(uint16_t sessionId, WebRTCEndReasonEnum reasonCode,
-                                                   DataModel::Nullable<uint16_t> videoStreamID,
-                                                   DataModel::Nullable<uint16_t> audioStreamID)
+CHIP_ERROR WebRTCProviderManager::HandleEndSession(uint16_t sessionId, WebRTCEndReasonEnum reasonCode)
 {
     WebrtcTransport * transport = GetTransport(sessionId);
     if (transport == nullptr) {
         ChipLogError(Camera, "Session ID %u does not match the current sessions", sessionId);
         return CHIP_ERROR_INVALID_ARGUMENT;
     }
-    if (transport != nullptr) {
-        ChipLogProgress(Camera, "Delete Webrtc Transport for the session: %u", sessionId);
 
-        // Release the Video and Audio Streams from the CameraAVStreamManagement
-        // cluster and update the reference counts.
-        // TODO: Lookup the sessionID to get the Video/Audio StreamID
-        ReleaseAudioVideoStreams(sessionId);
-
-        UnregisterWebrtcTransport(sessionId);
-        mWebrtcTransportMap.erase(sessionId);
-        WebrtcTransport::RequestArgs args = transport->GetRequestArgs();
-        mSessionIdMap.erase(ScopedNodeId(args.peerNodeId, args.fabricIndex));
-    }
-
-    if (transport->ClosePeerConnection()) {
-        ChipLogProgress(Camera, "Closing peer connection: %u", sessionId);
-    }
+    ChipLogProgress(Camera, "EndSession for session: %u, reason: %u", sessionId, static_cast<unsigned>(reasonCode));
+    CleanupSession(sessionId);
 
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR
-WebRTCProviderManager::ValidateStreamUsage(StreamUsageEnum streamUsage, Optional<DataModel::Nullable<uint16_t>>  &videoStreamId,
-                                           Optional<DataModel::Nullable<uint16_t>>  &audioStreamId)
+WebRTCProviderManager::ValidateStreamUsage(StreamUsageEnum streamUsage, Optional<std::vector<uint16_t>>  &videoStreams,
+                                           Optional<std::vector<uint16_t>>  &audioStreams)
 {
     if (mCameraDevice == nullptr) {
         ChipLogError(Camera, "CameraDeviceInterface not initialized");
@@ -404,7 +396,7 @@ WebRTCProviderManager::ValidateStreamUsage(StreamUsageEnum streamUsage, Optional
 
     auto  &avsmController = mCameraDevice->GetCameraAVStreamMgmtController();
 
-    return avsmController.ValidateStreamUsage(streamUsage, videoStreamId, audioStreamId);
+    return avsmController.ValidateStreamUsage(streamUsage, videoStreams, audioStreams);
 }
 
 CHIP_ERROR
@@ -431,6 +423,30 @@ WebRTCProviderManager::ValidateAudioStreamID(uint16_t audioStreamId)
     auto  &avsmController = mCameraDevice->GetCameraAVStreamMgmtController();
 
     return avsmController.ValidateAudioStreamID(audioStreamId);
+}
+
+CHIP_ERROR WebRTCProviderManager::ValidateVideoStreams(const std::vector<uint16_t>  &videoStreams)
+{
+    if (mCameraDevice == nullptr) {
+        ChipLogError(Camera, "CameraDeviceInterface not initialized");
+        return CHIP_ERROR_INCORRECT_STATE;
+    }
+
+    auto  &avsmController = mCameraDevice->GetCameraAVStreamMgmtController();
+
+    return avsmController.ValidateVideoStreams(videoStreams);
+}
+
+CHIP_ERROR WebRTCProviderManager::ValidateAudioStreams(const std::vector<uint16_t>  &audioStreams)
+{
+    if (mCameraDevice == nullptr) {
+        ChipLogError(Camera, "CameraDeviceInterface not initialized");
+        return CHIP_ERROR_INCORRECT_STATE;
+    }
+
+    auto  &avsmController = mCameraDevice->GetCameraAVStreamMgmtController();
+
+    return avsmController.ValidateAudioStreams(audioStreams);
 }
 
 CHIP_ERROR
@@ -724,18 +740,7 @@ void WebRTCProviderManager::OnDeviceConnected(void * context, Messaging::Exchang
         }
 
         err = self->SendEndCommand(exchangeMgr, sessionHandle, sessionId, endReason);
-        // Release the Video and Audio Streams from the CameraAVStreamManagement
-        // cluster and update the reference counts.
-        self->ReleaseAudioVideoStreams(sessionId);
-        self->UnregisterWebrtcTransport(sessionId);
-        WebrtcTransport::RequestArgs args = transport->GetRequestArgs();
-        self->mSessionIdMap.erase(ScopedNodeId(args.peerNodeId, args.fabricIndex));
-
-        transport->MoveToState(WebrtcTransport::State::Idle);
-
-        // remove from current sessions list
-        self->mWebRTCTransportProvider->RemoveSession(sessionId);
-        self->mWebrtcTransportMap.erase(sessionId);
+        self->CleanupSession(sessionId);
         break;
     }
     default:
@@ -864,41 +869,13 @@ void WebRTCProviderManager::OnConnectionStateChanged(bool connected, const uint1
         // a member of the global CameraDevice object which has static storage
         // duration and lives for the entire program lifetime.
         DeviceLayer::SystemLayer().ScheduleLambda([this, sessionId]() {
-            WebrtcTransport * transport = GetTransport(sessionId);
-            if (transport == nullptr) {
-                ChipLogProgress(Camera,
-                                "Transport not found for session %u during disconnect; "
-                                "session may have already been cleaned up",
-                                sessionId);
-                return;
-            }
-
-            // Connection was closed/disconnected by the peer - clean up the session
             ChipLogProgress(Camera, "Peer connection closed for session %u, cleaning up resources", sessionId);
 
-            // Release the Video and Audio Streams from the CameraAVStreamManagement
-            // cluster and update the reference counts.
-            ReleaseAudioVideoStreams(sessionId);
+            CleanupSession(sessionId);
 
-            // Capture args before unregistering in case the transport is invalidated
-            WebrtcTransport::RequestArgs args = transport->GetRequestArgs();
-
-            // Unregister the transport from the media controller
-            UnregisterWebrtcTransport(sessionId);
-
-            // Remove from session maps
-            mSessionIdMap.erase(ScopedNodeId(args.peerNodeId, args.fabricIndex));
-
-            // Remove from current sessions list in the WebRTC Transport Provider
-            // This MUST be called on the Matter thread with the stack lock held
             if (mWebRTCTransportProvider != nullptr) {
                 mWebRTCTransportProvider->RemoveSession(sessionId);
             }
-
-            // Finally, remove and destroy the transport
-            mWebrtcTransportMap.erase(sessionId);
-
-            ChipLogProgress(Camera, "Session %u cleanup completed", sessionId);
         });
     }
 }
@@ -1018,8 +995,8 @@ CHIP_ERROR WebRTCProviderManager::AcquireAudioVideoStreams(uint16_t sessionId)
     }
 
     WebrtcTransport::RequestArgs args = transport->GetRequestArgs();
-    return mCameraDevice->GetCameraAVStreamMgmtDelegate().OnTransportAcquireAudioVideoStreams(args.audioStreamId,
-                                                                                              args.videoStreamId);
+    return mCameraDevice->GetCameraAVStreamMgmtController().OnTransportAcquireAudioVideoStreams(args.audioStreams,
+                                                                                                args.videoStreams);
 }
 
 CHIP_ERROR WebRTCProviderManager::ReleaseAudioVideoStreams(uint16_t sessionId)
@@ -1031,7 +1008,29 @@ CHIP_ERROR WebRTCProviderManager::ReleaseAudioVideoStreams(uint16_t sessionId)
     }
 
     WebrtcTransport::RequestArgs args = transport->GetRequestArgs();
-    // TODO: Use passed in audio/video stream ids corresponding to a sessionId.
-    return mCameraDevice->GetCameraAVStreamMgmtDelegate().OnTransportReleaseAudioVideoStreams(args.audioStreamId,
-                                                                                              args.videoStreamId);
+    return mCameraDevice->GetCameraAVStreamMgmtController().OnTransportReleaseAudioVideoStreams(args.audioStreams,
+                                                                                                args.videoStreams);
+}
+
+void WebRTCProviderManager::CleanupSession(uint16_t sessionId)
+{
+    WebrtcTransport * transport = GetTransport(sessionId);
+    if (transport == nullptr) {
+        ChipLogProgress(Camera, "Transport not found for session %u; session may have already been cleaned up", sessionId);
+        return;
+    }
+
+    TEMPORARY_RETURN_IGNORED ReleaseAudioVideoStreams(sessionId);
+
+    WebrtcTransport::RequestArgs args = transport->GetRequestArgs();
+
+    UnregisterWebrtcTransport(sessionId);
+
+    transport->ClosePeerConnection();
+
+    mSessionIdMap.erase(ScopedNodeId(args.peerNodeId, args.fabricIndex));
+
+    mWebrtcTransportMap.erase(sessionId);
+
+    ChipLogProgress(Camera, "Session %u cleanup completed", sessionId);
 }

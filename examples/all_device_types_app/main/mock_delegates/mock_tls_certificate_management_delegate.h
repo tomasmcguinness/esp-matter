@@ -8,14 +8,14 @@
 
 #pragma once
 
-#include <app/clusters/tls-certificate-management-server/TlsCertificateManagementCluster.h>
+#include <app/clusters/tls-certificate-management-server/TLSCertificateManagementCluster.h>
 #include <protocols/interaction_model/StatusCode.h>
 
 namespace chip {
 namespace app {
 namespace Clusters {
 
-class MockTlsCertificateManagementDelegate : public TlsCertificateManagementDelegate {
+class MockTlsCertificateManagementDelegate : public TLSCertificateManagementDelegate {
 public:
     MockTlsCertificateManagementDelegate() = default;
     virtual ~MockTlsCertificateManagementDelegate() = default;

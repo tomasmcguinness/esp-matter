@@ -21,9 +21,9 @@ CONFIG_OPENTHREAD_CLI=n
 # Disable lwip ipv6 autoconfig
 CONFIG_LWIP_IPV6_AUTOCONFIG=n
 
-# Use a custom partition table
+# Use a custom partition table (larger app slots than partitions.csv for Wi-Fi + Thread build)
 CONFIG_PARTITION_TABLE_CUSTOM=y
-CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_wifi_thread.csv"
 
 # LwIP config for OpenThread
 CONFIG_LWIP_IPV6_NUM_ADDRESSES=8

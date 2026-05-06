@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_content_launcher_delegate.h"
 
@@ -24,7 +25,7 @@ void MockContentLauncherDelegate::HandleLaunchContent(CommandResponseHelper<Comm
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::LauncherResponse::Type response;
     response.status = StatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockContentLauncherDelegate::HandleLaunchUrl(CommandResponseHelper<Commands::LauncherResponse::Type>  &helper, const CharSpan  &contentUrl,
@@ -34,7 +35,7 @@ void MockContentLauncherDelegate::HandleLaunchUrl(CommandResponseHelper<Commands
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::LauncherResponse::Type response;
     response.status = StatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 CHIP_ERROR MockContentLauncherDelegate::HandleGetAcceptHeaderList(app::AttributeValueEncoder  &aEncoder)

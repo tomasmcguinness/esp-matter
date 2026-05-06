@@ -31,10 +31,10 @@ CHIP_ERROR MockChimeDelegate::GetChimeIDByIndex(uint8_t chimeIndex, uint8_t  &ch
     return CHIP_ERROR_PROVIDER_LIST_EXHAUSTED;
 }
 
-Protocols::InteractionModel::Status MockChimeDelegate::PlayChimeSound()
+Protocols::InteractionModel::Status MockChimeDelegate::PlayChimeSound(uint8_t chimeID)
 {
     // Implement your own logic here.
-    ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
+    ESP_LOGE(LOG_TAG, "%s is not implemented (chimeID=%u)", __func__, chimeID);
     return Protocols::InteractionModel::Status::Success;
 }
 
