@@ -38,7 +38,7 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "push_av_stream_transport_cluster";
-constexpr uint16_t cluster_revision = 1;
+constexpr uint16_t cluster_revision = 2;
 
 namespace esp_matter {
 namespace cluster {

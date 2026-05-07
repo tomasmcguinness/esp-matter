@@ -26,6 +26,7 @@
 #include <bridged_device_basic_information_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -35,7 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "bridged_device_basic_information_cluster";
-constexpr uint16_t cluster_revision = 5;
+constexpr uint16_t cluster_revision = 6;
 
 namespace esp_matter {
 namespace cluster {
@@ -227,9 +228,11 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
         attribute::create_reachable(cluster, config->reachable);
-        attribute::create_unique_id(cluster, config->unique_id, sizeof(config->unique_id));
         /* Events */
         event::create_reachable_changed(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterBridgedDeviceBasicInformationClusterServerInitCallback,
+                                                 ESPMatterBridgedDeviceBasicInformationClusterServerShutdownCallback);
     }
 
     return cluster;

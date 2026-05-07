@@ -10,6 +10,7 @@
 #include <esp_log.h>
 #include <nvs_flash.h>
 
+#include <app/clusters/temperature-control-server/TemperatureControlCluster.h>
 #include <esp_matter.h>
 #include <esp_matter_console.h>
 
@@ -133,11 +134,11 @@ extern "C" void app_main()
     set_openthread_platform_config(&config);
 #endif
 
+    chip::app::Clusters::TemperatureControlCluster::SetDelegate(&sAppSupportedTemperatureLevelsDelegate);
+
     /* Matter start */
     err = esp_matter::start(app_event_cb);
     ABORT_APP_ON_FAILURE(err == ESP_OK, ESP_LOGE(TAG, "Failed to start Matter, err:%d", err));
-
-    chip::app::Clusters::TemperatureControl::SetInstance(&sAppSupportedTemperatureLevelsDelegate);
 
 #if CONFIG_ENABLE_CHIP_SHELL
     esp_matter::console::diagnostics_register_commands();

@@ -13,7 +13,9 @@
 # limitations under the License.
 import logging
 import os
+import re
 from enum import Enum
+from typing import List, Optional, Tuple
 
 from .exceptions import ConfigurationError
 from colorlog import ColoredFormatter
@@ -34,13 +36,57 @@ COLORED_FORMATTER = ColoredFormatter(
 )
 
 DEFAULT_OUTPUT_DIR = "out"
-DEFAULT_CHIP_VERSION = "1.5"
 
 ARTIFACTS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "artifacts"
 )
 
-SPECIFICATION_VERSIONS = ["1.1", "1.2", "1.3", "1.4", "1.4.2", "1.5", "1.6"]
+# Folder names under `connectedhomeip/connectedhomeip/data_model` that look like
+# a numeric revision (e.g. 1.4, 1.4.2, 1.5.1) — excludes README and other files.
+_DATA_MODEL_VERSION_DIR = re.compile(r"^\d+(?:\.\d+)*$")
+
+
+def get_chip_data_model_root(esp_matter_path: str) -> str:
+    """Path to the CHIP `data_model` directory for the connectedhomeip submodule."""
+    return os.path.join(esp_matter_path, "connectedhomeip", "connectedhomeip", "data_model")
+
+
+def specification_version_sort_key(version: str) -> Tuple[int, ...]:
+    """Sort key for Matter `data_model` folder names (dot-separated integers)."""
+    return tuple(int(p) for p in version.split("."))
+
+
+def discover_data_model_specification_versions(esp_matter_path: str) -> List[str]:
+    """
+    List data model revision folder names that exist under CHIP's `data_model/`
+    and have the expected `clusters` and `device_types` subdirectories.
+    """
+    root = get_chip_data_model_root(esp_matter_path)
+    if not os.path.isdir(root):
+        return []
+
+    out: List[str] = []
+    for name in os.listdir(root):
+        if not _DATA_MODEL_VERSION_DIR.match(name):
+            continue
+        full = os.path.join(root, name)
+        if not os.path.isdir(full):
+            continue
+        clusters = os.path.join(full, "clusters")
+        device_types = os.path.join(full, "device_types")
+        if os.path.isdir(clusters) and os.path.isdir(device_types):
+            out.append(name)
+
+    return sorted(out, key=specification_version_sort_key)
+
+
+def get_highest_data_model_version(esp_matter_path: str) -> Optional[str]:
+    """Highest revision folder name under `data_model/`, or None if none qualify."""
+    versions = discover_data_model_specification_versions(esp_matter_path)
+    if not versions:
+        return None
+    return max(versions, key=specification_version_sort_key)
+
 
 ALLOW_PROVISIONAL = False
 

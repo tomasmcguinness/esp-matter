@@ -25,10 +25,6 @@ namespace attribute {
 attribute_t *create_state_value(cluster_t *cluster, bool value);
 } /* attribute */
 
-namespace event {
-event_t *create_state_change(cluster_t *cluster);
-} /* event */
-
 typedef struct config {
     bool state_value;
     config() : state_value(false) {}

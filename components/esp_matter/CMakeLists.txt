@@ -10,6 +10,7 @@ set(INCLUDE_DIRS_LIST   "."
                         "data_model_provider"
                         "${MATTER_SDK_PATH}/zzz_generated/app-common"
                         "${MATTER_SDK_PATH}/third_party/nlfaultinjection/include"
+		                "${MATTER_SDK_PATH}/third_party/uriparser/repo/include"
                         "${MATTER_SDK_PATH}/src")
 
 set(PRIV_INCLUDE_DIRS_LIST )
@@ -82,10 +83,16 @@ endif(CONFIG_ESP_MATTER_ENABLE_MATTER_SERVER)
 
 set(REQUIRES_LIST       chip bt esp_matter_console nvs_flash app_update esp_secure_cert_mgr mbedtls esp_system openthread json)
 
+set(PRIV_REQUIRES_LIST "")
+if (CONFIG_OPENTHREAD_BORDER_ROUTER AND CONFIG_AUTO_UPDATE_RCP AND CONFIG_ENABLE_OTA_REQUESTOR)
+    list(APPEND PRIV_REQUIRES_LIST esp_rcp_update)
+endif()
+
 idf_component_register( SRC_DIRS        ${SRC_DIRS_LIST}
                         INCLUDE_DIRS    ${INCLUDE_DIRS_LIST}
                         EXCLUDE_SRCS    ${EXCLUDE_SRCS_LIST}
                         PRIV_INCLUDE_DIRS ${PRIV_INCLUDE_DIRS_LIST}
+                        PRIV_REQUIRES   ${PRIV_REQUIRES_LIST}
                         REQUIRES        ${REQUIRES_LIST})
 
 # This has been added to fix the error and should be removed once fixed:

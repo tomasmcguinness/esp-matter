@@ -33,9 +33,6 @@ inline constexpr uint32_t Id = 0x2;
 namespace Occupancy {
 inline constexpr uint32_t Id = 0x4;
 } /* Occupancy */
-namespace Setback {
-inline constexpr uint32_t Id = 0x10;
-} /* Setback */
 namespace AutoMode {
 inline constexpr uint32_t Id = 0x20;
 } /* AutoMode */
@@ -72,12 +69,6 @@ inline constexpr uint32_t Id = 0x0005;
 namespace AbsMaxCoolSetpointLimit {
 inline constexpr uint32_t Id = 0x0006;
 } /* AbsMaxCoolSetpointLimit */
-namespace PICoolingDemand {
-inline constexpr uint32_t Id = 0x0007;
-} /* PICoolingDemand */
-namespace PIHeatingDemand {
-inline constexpr uint32_t Id = 0x0008;
-} /* PIHeatingDemand */
 namespace LocalTemperatureCalibration {
 inline constexpr uint32_t Id = 0x0010;
 } /* LocalTemperatureCalibration */
@@ -117,18 +108,12 @@ inline constexpr uint32_t Id = 0x001B;
 namespace SystemMode {
 inline constexpr uint32_t Id = 0x001C;
 } /* SystemMode */
-namespace ThermostatRunningMode {
-inline constexpr uint32_t Id = 0x001E;
-} /* ThermostatRunningMode */
 namespace TemperatureSetpointHold {
 inline constexpr uint32_t Id = 0x0023;
 } /* TemperatureSetpointHold */
 namespace TemperatureSetpointHoldDuration {
 inline constexpr uint32_t Id = 0x0024;
 } /* TemperatureSetpointHoldDuration */
-namespace ThermostatProgrammingOperationMode {
-inline constexpr uint32_t Id = 0x0025;
-} /* ThermostatProgrammingOperationMode */
 namespace ThermostatRunningState {
 inline constexpr uint32_t Id = 0x0029;
 } /* ThermostatRunningState */
@@ -141,24 +126,6 @@ inline constexpr uint32_t Id = 0x0031;
 namespace SetpointChangeSourceTimestamp {
 inline constexpr uint32_t Id = 0x0032;
 } /* SetpointChangeSourceTimestamp */
-namespace OccupiedSetback {
-inline constexpr uint32_t Id = 0x0034;
-} /* OccupiedSetback */
-namespace OccupiedSetbackMin {
-inline constexpr uint32_t Id = 0x0035;
-} /* OccupiedSetbackMin */
-namespace OccupiedSetbackMax {
-inline constexpr uint32_t Id = 0x0036;
-} /* OccupiedSetbackMax */
-namespace UnoccupiedSetback {
-inline constexpr uint32_t Id = 0x0037;
-} /* UnoccupiedSetback */
-namespace UnoccupiedSetbackMin {
-inline constexpr uint32_t Id = 0x0038;
-} /* UnoccupiedSetbackMin */
-namespace UnoccupiedSetbackMax {
-inline constexpr uint32_t Id = 0x0039;
-} /* UnoccupiedSetbackMax */
 namespace EmergencyHeatDelta {
 inline constexpr uint32_t Id = 0x003A;
 } /* EmergencyHeatDelta */

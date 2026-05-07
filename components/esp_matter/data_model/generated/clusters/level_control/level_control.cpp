@@ -35,7 +35,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "level_control_cluster";
-constexpr uint16_t cluster_revision = 6;
+constexpr uint16_t cluster_revision = 7;
 
 static esp_err_t esp_matter_command_callback_move_to_level(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                            void *opaque_ptr)
@@ -185,7 +185,7 @@ attribute_t *create_remaining_time(cluster_t *cluster, uint16_t value)
 attribute_t *create_min_level(cluster_t *cluster, uint8_t value)
 {
     attribute_t *attribute = esp_matter::attribute::create(cluster, MinLevel::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(1), esp_matter_uint8(254));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(254));
     return attribute;
 }
 

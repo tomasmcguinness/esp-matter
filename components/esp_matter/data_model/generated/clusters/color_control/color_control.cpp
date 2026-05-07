@@ -35,7 +35,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "color_control_cluster";
-constexpr uint16_t cluster_revision = 8;
+constexpr uint16_t cluster_revision = 9;
 
 static esp_err_t esp_matter_command_callback_move_to_hue(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                          void *opaque_ptr)

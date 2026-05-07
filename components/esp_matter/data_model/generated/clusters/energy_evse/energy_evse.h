@@ -21,20 +21,37 @@ namespace esp_matter {
 namespace cluster {
 namespace energy_evse {
 
+const uint8_t k_max_vehicle_id_length = 32u;
 namespace feature {
 namespace charging_preferences {
+typedef struct config {
+    nullable<uint32_t> next_charge_start_time;
+    nullable<uint32_t> next_charge_target_time;
+    nullable<int64_t> next_charge_required_energy;
+    nullable<uint8_t> next_charge_target_soc;
+    config() : next_charge_start_time(0), next_charge_target_time(0), next_charge_required_energy(0), next_charge_target_soc(0) {}
+} config_t;
 uint32_t get_id();
-esp_err_t add(cluster_t *cluster);
+esp_err_t add(cluster_t *cluster, config_t *config);
 } /* charging_preferences */
 
 namespace so_c_reporting {
+typedef struct config {
+    nullable<uint8_t> state_of_charge;
+    nullable<int64_t> battery_capacity;
+    config() : state_of_charge(0), battery_capacity(0) {}
+} config_t;
 uint32_t get_id();
-esp_err_t add(cluster_t *cluster);
+esp_err_t add(cluster_t *cluster, config_t *config);
 } /* so_c_reporting */
 
 namespace plug_and_charge {
+typedef struct config {
+    char vehicle_id[k_max_vehicle_id_length + 1];
+    config() {}
+} config_t;
 uint32_t get_id();
-esp_err_t add(cluster_t *cluster);
+esp_err_t add(cluster_t *cluster, config_t *config);
 } /* plug_and_charge */
 
 namespace rfid {
@@ -43,8 +60,14 @@ esp_err_t add(cluster_t *cluster);
 } /* rfid */
 
 namespace v_2_x {
+typedef struct config {
+    nullable<uint32_t> discharging_enabled_until;
+    int64_t maximum_discharge_current;
+    nullable<int64_t> session_energy_discharged;
+    config() : discharging_enabled_until(0), maximum_discharge_current(0), session_energy_discharged(0) {}
+} config_t;
 uint32_t get_id();
-esp_err_t add(cluster_t *cluster);
+esp_err_t add(cluster_t *cluster, config_t *config);
 } /* v_2_x */
 
 } /* feature */
@@ -96,8 +119,18 @@ event_t *create_rfid(cluster_t *cluster);
 } /* event */
 
 typedef struct config {
+    nullable<uint8_t> state;
+    uint8_t supply_state;
+    uint8_t fault_state;
+    nullable<uint32_t> charging_enabled_until;
+    int64_t circuit_capacity;
+    int64_t minimum_charge_current;
+    int64_t maximum_charge_current;
+    nullable<uint32_t> session_id;
+    nullable<uint32_t> session_duration;
+    nullable<int64_t> session_energy_charged;
     void *delegate;
-    config() : delegate(nullptr) {}
+    config() : state(0), supply_state(0), fault_state(0), charging_enabled_until(0), circuit_capacity(0), minimum_charge_current(0), maximum_charge_current(0), session_id(0), session_duration(0), session_energy_charged(0), delegate(nullptr) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

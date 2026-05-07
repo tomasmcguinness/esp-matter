@@ -16,11 +16,14 @@
 
 #include <app/ClusterCallbacks.h>
 #include <app/clusters/network-commissioning/NetworkCommissioningCluster.h>
+#include <app/server/Server.h>
 #include <data_model/esp_matter_data_model.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <platform/DeviceControlServer.h>
 #include <lib/support/CodeUtils.h>
 #include <platform/ESP32/NetworkCommissioningDriver.h>
 #include <platform/OpenThread/GenericNetworkCommissioningThreadDriver.h>
+#include <platform/PlatformManager.h>
 #include <clusters/general_commissioning/integration.h>
 
 using namespace chip;
@@ -62,6 +65,16 @@ public:
 
 ESPMatterGeneralCommissioningBreadcrumbTracker gBreadcrumbTracker;
 
+NetworkCommissioningCluster::Context MakeNetworkCommissioningClusterContext()
+{
+    return NetworkCommissioningCluster::Context{
+        .breadcrumbTracker   = gBreadcrumbTracker,
+        .failSafeContext     = Server::GetInstance().GetFailSafeContext(),
+        .platformManager     = DeviceLayer::PlatformMgr(),
+        .deviceControlServer = DeviceLayer::DeviceControlServer::DeviceControlSvr(),
+    };
+}
+
 uint16_t GetServerIndex(EndpointId endpointId)
 {
     esp_matter::endpoint_t *ep = esp_matter::endpoint::get(endpointId);
@@ -92,21 +105,23 @@ void ESPMatterNetworkCommissioningClusterServerInitCallback(EndpointId endpointI
 #ifdef CONFIG_THREAD_NETWORK_COMMISSIONING_DRIVER
     if (endpointId == CONFIG_THREAD_NETWORK_ENDPOINT_ID) {
         static DeviceLayer::NetworkCommissioning::GenericThreadDriver sThreadDriver;
-        gServers[index].Create(endpointId, &sThreadDriver, gBreadcrumbTracker);
+        gServers[index].Create(endpointId, &sThreadDriver, MakeNetworkCommissioningClusterContext());
         LogErrorOnFailure(gServers[index].Cluster().Init());
         LogErrorOnFailure(esp_matter::data_model::provider::get_instance().registry().Register(gServers[index].Registration()));
     }
 #endif
 #ifdef CONFIG_WIFI_NETWORK_COMMISSIONING_DRIVER
     if (endpointId == CONFIG_WIFI_NETWORK_ENDPOINT_ID) {
-        gServers[index].Create(endpointId, &(DeviceLayer::NetworkCommissioning::ESPWiFiDriver::GetInstance()), gBreadcrumbTracker);
+        gServers[index].Create(endpointId, &(DeviceLayer::NetworkCommissioning::ESPWiFiDriver::GetInstance()),
+                               MakeNetworkCommissioningClusterContext());
         LogErrorOnFailure(gServers[index].Cluster().Init());
         LogErrorOnFailure(esp_matter::data_model::provider::get_instance().registry().Register(gServers[index].Registration()));
     }
 #endif
 #ifdef CONFIG_ETHERNET_NETWORK_COMMISSIONING_DRIVER
     if (endpointId == CONFIG_ETHERNET_NETWORK_ENDPOINT_ID) {
-        gServers[index].Create(endpointId, &(DeviceLayer::NetworkCommissioning::ESPEthernetDriver::GetInstance()), gBreadcrumbTracker);
+        gServers[index].Create(endpointId, &(DeviceLayer::NetworkCommissioning::ESPEthernetDriver::GetInstance()),
+                               MakeNetworkCommissioningClusterContext());
         LogErrorOnFailure(gServers[index].Cluster().Init());
         LogErrorOnFailure(esp_matter::data_model::provider::get_instance().registry().Register(gServers[index].Registration()));
     }

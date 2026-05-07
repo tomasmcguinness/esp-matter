@@ -192,7 +192,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 namespace bridged_device_basic_information {
 typedef struct config {
     bool reachable;
-    config() : reachable(true) {}
+    char unique_id[33];
+    config() : reachable(true), unique_id{0} {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
@@ -245,6 +246,21 @@ using config_t = common::config_t;
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 uint8_t get_server_cluster_count();
 } /* groups */
+
+namespace groupcast {
+typedef struct config {
+    uint32_t feature_flags;
+    uint16_t max_membership_count;
+    uint16_t max_mcast_address_count;
+    uint16_t used_mcast_address_count;
+    uint8_t fabric_under_test;
+    config() :
+        feature_flags(0), max_membership_count(10), max_mcast_address_count(1), used_mcast_address_count(0),
+        fabric_under_test(0)
+    {}
+} config_t;
+cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
+} /* groupcast */
 
 namespace scenes_management {
 typedef struct config {
@@ -335,7 +351,10 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 } /* thermostat_user_interface_configuration */
 
 namespace air_quality {
-using config_t = common::config_t;
+typedef struct config {
+    uint8_t air_quality;
+    config() : air_quality(0) {}
+} config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);
 } /* air_quality */

@@ -16,6 +16,8 @@
 #include <esp_matter_data_model.h>
 #include <esp_matter_data_model_priv.h>
 
+#include <app/server/Server.h>
+
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/PluginApplicationCallbacks.h>
 #include <app/clusters/administrator-commissioning-server/AdministratorCommissioningCluster.h>
@@ -42,7 +44,12 @@ void ESPMatterAdministratorCommissioningClusterServerInitCallback(EndpointId end
     if (attribute) {
         esp_matter_attr_val_t val = esp_matter_invalid(nullptr);
         if (esp_matter::attribute::get_val_internal(attribute, &val) == ESP_OK && val.type == ESP_MATTER_VAL_TYPE_BITMAP32) {
-            gServer.Create(endpointId, BitFlags<AdministratorCommissioning::Feature>(val.val.u32));
+            gServer.Create(endpointId, BitFlags<AdministratorCommissioning::Feature>(val.val.u32),
+                           AdministratorCommissioningCluster::Context{ .commissioningWindowManager =
+                                                                           Server::GetInstance().GetCommissioningWindowManager(),
+                                                                       .fabricTable     = Server::GetInstance().GetFabricTable(),
+                                                                       .failSafeContext = Server::GetInstance().GetFailSafeContext() });
+
             CHIP_ERROR err =
                 esp_matter::data_model::provider::get_instance().registry().Register(gServer.Registration());
             if (err != CHIP_NO_ERROR) {

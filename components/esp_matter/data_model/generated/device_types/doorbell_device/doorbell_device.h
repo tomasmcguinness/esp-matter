@@ -26,7 +26,7 @@
 #include <esp_matter_core.h>
 
 #define ESP_MATTER_DOORBELL_DEVICE_TYPE_ID 0x0148
-#define ESP_MATTER_DOORBELL_DEVICE_TYPE_VERSION 1
+#define ESP_MATTER_DOORBELL_DEVICE_TYPE_VERSION 2
 
 namespace esp_matter {
 namespace endpoint {

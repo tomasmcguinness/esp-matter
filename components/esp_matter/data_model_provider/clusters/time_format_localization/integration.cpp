@@ -17,6 +17,9 @@
 #include <app/ClusterCallbacks.h>
 #include <app/clusters/time-format-localization-server/TimeFormatLocalizationCluster.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
+#include <platform/DeviceInfoProvider.h>
 #include "clusters/TimeFormatLocalization/Enums.h"
 
 using namespace chip;
@@ -73,11 +76,15 @@ void ESPMatterTimeFormatLocalizationClusterServerInitCallback(EndpointId endpoin
     // This cluster should only exist in Root endpoint.
     VerifyOrReturn(endpoint == kRootEndpointId);
     esp_matter::cluster_t *cluster = esp_matter::cluster::get(endpoint, TimeFormatLocalization::Id);
-    if (!cluster) {
-        return;
-    }
+    VerifyOrReturn(cluster != nullptr,
+                   ChipLogError(AppServer,
+                                "TimeFormatLocalization: cluster missing in esp-matter data model for endpoint %u", endpoint));
+    auto * deviceInfoProvider = DeviceLayer::GetDeviceInfoProvider();
+    VerifyOrDie(deviceInfoProvider != nullptr);
+
     gServer.Create(endpoint, BitFlags<TimeFormatLocalization::Feature>(get_feature_map(cluster)),
-                   get_default_hour_format(cluster), get_default_calendar_type(cluster));
+                   get_default_hour_format(cluster), get_default_calendar_type(cluster),
+                   TimeFormatLocalizationCluster::Context{ .deviceInfoProvider = *deviceInfoProvider });
 
     CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(gServer.Registration());
     if (err != CHIP_NO_ERROR) {

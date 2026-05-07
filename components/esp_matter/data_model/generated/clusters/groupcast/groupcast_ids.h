@@ -12,12 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* THIS IS A GENERATED FILE, DO NOT EDIT */
+
 #pragma once
+#include <esp_matter_data_model.h>
 
-#include <app/clusters/occupancy-sensor-server/OccupancySensingCluster.h>
+namespace esp_matter {
+namespace cluster {
+namespace groupcast {
 
-namespace chip::app::Clusters::OccupancySensing {
+inline constexpr uint32_t Id = 0x0065;
 
-OccupancySensingCluster * FindClusterOnEndpoint(EndpointId endpointId);
+namespace feature {
+namespace Listener {
+inline constexpr uint32_t Id = 0x1;
+} /* Listener */
+namespace Sender {
+inline constexpr uint32_t Id = 0x2;
+} /* Sender */
+namespace PerGroup {
+inline constexpr uint32_t Id = 0x4;
+} /* PerGroup */
+} /* feature */
 
-} // namespace chip::app::Clusters::OccupancySensing
+} /* groupcast */
+} /* cluster */
+} /* esp_matter */

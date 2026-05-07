@@ -617,6 +617,59 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 }
 } /* operational_credentials */
 
+namespace groupcast {
+const function_generic_t *function_list = NULL;
+const int function_flags = CLUSTER_FLAG_NONE;
+
+cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
+{
+    cluster_t * cluster = cluster::create(endpoint, Groupcast::Id, flags);
+    VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, Groupcast::Id));
+
+    if (flags & CLUSTER_FLAG_SERVER) {
+        static const auto plugin_server_init_cb = CALL_ONCE(MatterGroupcastPluginServerInitCallback);
+        set_plugin_server_init_callback(cluster, plugin_server_init_cb);
+        add_function_list(cluster, function_list, function_flags);
+
+        VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
+
+        /* Attributes managed internally */
+        global::attribute::create_cluster_revision(cluster, 0);
+        attribute::create_membership(cluster, NULL, 0, 0);
+        attribute::create_max_membership_count(cluster, config->max_membership_count);
+        attribute::create_max_mcast_address_count(cluster, config->max_mcast_address_count);
+        attribute::create_used_mcast_address_count(cluster, config->used_mcast_address_count);
+        attribute::create_fabric_under_test(cluster, config->fabric_under_test);
+
+        command::create_join_group(cluster);
+        command::create_leave_group(cluster);
+        command::create_leave_group_response(cluster);
+        command::create_update_group_key(cluster);
+        command::create_groupcast_testing(cluster);
+
+        VALIDATE_FEATURES_AT_LEAST_ONE("Listener,Sender",
+                                       feature::listener::get_id(), feature::sender::get_id());
+
+        if (has(feature::listener::get_id())) {
+            feature::listener::add(cluster);
+        }
+        if (has(feature::sender::get_id())) {
+            feature::sender::add(cluster);
+        }
+        if (has(feature::per_group::get_id())) {
+            feature::per_group::add(cluster);
+        }
+
+        event::create_groupcast_testing(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterGroupcastClusterServerInitCallback,
+                                                 ESPMatterGroupcastClusterServerShutdownCallback);
+    }
+
+    return cluster;
+}
+} /* groupcast */
+
 namespace group_key_management {
 const function_generic_t *function_list = NULL;
 const int function_flags = CLUSTER_FLAG_NONE;
@@ -725,6 +778,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterThreadNetworkDiagnosticsClusterServerInitCallback,
+                                                 ESPMatterThreadNetworkDiagnosticsClusterServerShutdownCallback);
     }
 
     return cluster;
@@ -824,8 +880,11 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 } /* unit_localization */
 
 namespace bridged_device_basic_information {
-const function_generic_t *function_list = NULL;
-const int function_flags = CLUSTER_FLAG_NONE;
+const function_generic_t function_list[] = {
+    (function_generic_t)MatterBridgedDeviceBasicInformationClusterServerAttributeChangedCallback,
+};
+
+const int function_flags = CLUSTER_FLAG_ATTRIBUTE_CHANGED_FUNCTION;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 {
@@ -833,24 +892,25 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
     VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, BridgedDeviceBasicInformation::Id));
 
     if (flags & CLUSTER_FLAG_SERVER) {
-        // There is not PluginServer(Client)InitCallback for this cluster
+        VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
+        static const auto plugin_server_init_cb = CALL_ONCE(MatterBridgedDeviceBasicInformationPluginServerInitCallback);
+        set_plugin_server_init_callback(cluster, plugin_server_init_cb);
         add_function_list(cluster, function_list, function_flags);
 
         /* Attributes managed internally */
         global::attribute::create_feature_map(cluster, 0);
-        attribute::create_unique_id(cluster, NULL, 0);
 
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
-        if (config) {
-            attribute::create_reachable(cluster, config->reachable);
-        } else {
-            ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
-        }
-    }
+        attribute::create_reachable(cluster, config->reachable);
+        attribute::create_unique_id(cluster, config->unique_id, sizeof(config->unique_id));
+        /* Events */
+        event::create_reachable_changed(cluster);
 
-    event::create_reachable_changed(cluster);
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterBridgedDeviceBasicInformationClusterServerInitCallback,
+                                                 ESPMatterBridgedDeviceBasicInformationClusterServerShutdownCallback);
+    }
 
     return cluster;
 }
@@ -898,6 +958,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
                 feature::replaceable::add(cluster, &(config->features.replaceable));
             }
         }
+
     }
 
     return cluster;
@@ -1029,10 +1090,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 } /* identify */
 
 namespace groups {
-const function_generic_t function_list[] = {
-    (function_generic_t)emberAfGroupsClusterServerInitCallback,
-};
-const int function_flags = CLUSTER_FLAG_INIT_FUNCTION;
+const function_generic_t *function_list = NULL;
+const int function_flags = CLUSTER_FLAG_NONE;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 {
@@ -1055,6 +1114,8 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         } else {
             ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
         }
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterGroupsClusterServerInitCallback,
+                                                 ESPMatterGroupsClusterServerShutdownCallback);
     }
 
     /* Commands */
@@ -1427,15 +1488,21 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
     VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, AirQuality::Id));
 
     if (flags & CLUSTER_FLAG_SERVER) {
+        VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
+        static const auto plugin_server_init_cb = CALL_ONCE(MatterAirQualityPluginServerInitCallback);
+        set_plugin_server_init_callback(cluster, plugin_server_init_cb);
         add_function_list(cluster, function_list, function_flags);
 
         /* Attributes managed internally */
         global::attribute::create_feature_map(cluster, 0);
 
-        attribute::create_air_quality(cluster, 0);
-
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
+
+        attribute::create_air_quality(cluster, config->air_quality);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterAirQualityClusterServerInitCallback,
+                                                 ESPMatterAirQualityClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {
@@ -2107,6 +2174,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
             // momentary_switch_multi_press::add() checks against !AS feature so okay to call it twice even if AS is present
             VerifyOrReturnValue(feature::momentary_switch_multi_press::add(cluster, &(config->features.momentary_switch_multi_press)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterSwitchClusterServerInitCallback,
+                                                 ESPMatterSwitchClusterServerShutdownCallback);
     } // if (flags & CLUSTER_FLAG_SERVER)
 
     if (flags & CLUSTER_FLAG_CLIENT) {
@@ -2127,6 +2197,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
     VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, TemperatureMeasurement::Id));
 
     if (flags & CLUSTER_FLAG_SERVER) {
+        VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
         static const auto plugin_server_init_cb = CALL_ONCE(MatterTemperatureMeasurementPluginServerInitCallback);
         set_plugin_server_init_callback(cluster, plugin_server_init_cb);
         add_function_list(cluster, function_list, function_flags);
@@ -2136,13 +2207,12 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
-        if (config) {
-            attribute::create_measured_value(cluster, config->measured_value);
-            attribute::create_min_measured_value(cluster, config->min_measured_value);
-            attribute::create_max_measured_value(cluster, config->max_measured_value);
-        } else {
-            ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
-        }
+        attribute::create_measured_value(cluster, config->measured_value);
+        attribute::create_min_measured_value(cluster, config->min_measured_value);
+        attribute::create_max_measured_value(cluster, config->max_measured_value);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterTemperatureMeasurementClusterServerInitCallback,
+                                                 ESPMatterTemperatureMeasurementClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {
@@ -2414,6 +2484,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
     cluster_t *cluster = cluster::create(endpoint, IlluminanceMeasurement::Id, flags);
     VerifyOrReturnValue(cluster, NULL, ESP_LOGE(TAG, "Could not create cluster. cluster_id: 0x%08" PRIX32, IlluminanceMeasurement::Id));
     if (flags & CLUSTER_FLAG_SERVER) {
+        VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
         static const auto plugin_server_init_cb = CALL_ONCE(MatterIlluminanceMeasurementPluginServerInitCallback);
         set_plugin_server_init_callback(cluster, plugin_server_init_cb);
         add_function_list(cluster, function_list, function_flags);
@@ -2423,15 +2494,12 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         /** Attributes not managed internally **/
         global::attribute::create_cluster_revision(cluster, cluster_revision);
-        if (config) {
-            attribute::create_measured_value(cluster, config->measured_value, 0x0000, 0xFFFF);
-            attribute::create_min_measured_value(cluster, config->min_measured_value, 0x0001,
-                                                 0xFFFD);
-            attribute::create_max_measured_value(cluster, config->max_measured_value, 0x0002,
-                                                 0xFFFE);
-        } else {
-            ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
-        }
+        attribute::create_measured_value(cluster, config->measured_value, 0x0000, 0xFFFF);
+        attribute::create_min_measured_value(cluster, config->min_measured_value, 0x0001, 0xFFFD);
+        attribute::create_max_measured_value(cluster, config->max_measured_value, 0x0002, 0xFFFE);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterIlluminanceMeasurementClusterServerInitCallback,
+                                                 ESPMatterIlluminanceMeasurementClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {
@@ -2728,6 +2796,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         if (has(feature::temperature_level::get_id())) {
             feature::temperature_level::add(cluster, &(config->features.temperature_level));
         }
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterTemperatureControlClusterServerInitCallback,
+                                                 ESPMatterTemperatureControlClusterServerShutdownCallback);
     } // if (flags & CLUSTER_FLAG_SERVER)
 
     /* Commands */
@@ -3256,6 +3327,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterEnergyEvseClusterServerInitCallback,
+                                                 ESPMatterEnergyEvseClusterServerShutdownCallback);
     }
     feature::charging_preferences::add(cluster);
 
@@ -3298,6 +3372,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         } else {
             ESP_LOGE(TAG, "Config is NULL. Cannot add some attributes.");
         }
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterValveConfigurationAndControlClusterServerInitCallback,
+                                                 ESPMatterValveConfigurationAndControlClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {
@@ -3817,8 +3894,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         // TODO: Add a delegate initialization callback.
         // The current esp_matter initialization flow makes this hard to implement cleanly.
 
-        static const auto plugin_server_init_cb = CALL_ONCE(MatterCameraAvStreamManagementPluginServerInitCallback);
-        set_plugin_server_init_callback(cluster, plugin_server_init_cb);
         add_function_list(cluster, function_list, function_flags);
 
         VerifyOrReturnValue(config != NULL, ABORT_CLUSTER_CREATE(cluster));
@@ -4141,6 +4216,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         if (!has(feature::instantaneous::get_id())) {
             event::create_movement_completed(cluster);
         }
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterClosureControlClusterServerInitCallback,
+                                                 ESPMatterClosureControlClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

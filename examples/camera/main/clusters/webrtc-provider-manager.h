@@ -22,6 +22,7 @@
 #include <app/CASESessionManager.h>
 #include <app/clusters/webrtc-transport-provider-server/WebRTCTransportProviderCluster.h>
 #include <map>
+#include <vector>
 #include <webrtc-transport.h>
 
 namespace chip {
@@ -64,19 +65,20 @@ public:
 
     CHIP_ERROR HandleProvideICECandidates(uint16_t sessionId, const std::vector<ICECandidateStruct>  &candidates) override;
 
-    CHIP_ERROR HandleEndSession(uint16_t sessionId, chip::app::Clusters::WebRTCTransportProvider::WebRTCEndReasonEnum reasonCode,
-                                chip::app::DataModel::Nullable<uint16_t> videoStreamID,
-                                chip::app::DataModel::Nullable<uint16_t> audioStreamID) override;
+    CHIP_ERROR HandleEndSession(uint16_t sessionId, chip::app::Clusters::WebRTCTransportProvider::WebRTCEndReasonEnum reasonCode) override;
 
-    CHIP_ERROR ValidateStreamUsage(StreamUsageEnum streamUsage,
-                                   chip::Optional<chip::app::DataModel::Nullable<uint16_t>>  &videoStreamId,
-                                   chip::Optional<chip::app::DataModel::Nullable<uint16_t>>  &audioStreamId) override;
+    CHIP_ERROR ValidateStreamUsage(StreamUsageEnum streamUsage, chip::Optional<std::vector<uint16_t>>  &videoStreams,
+                                   chip::Optional<std::vector<uint16_t>>  &audioStreams) override;
 
     void SetCameraDevice(CameraDeviceInterface * aCameraDevice);
 
     CHIP_ERROR ValidateVideoStreamID(uint16_t videoStreamId) override;
 
     CHIP_ERROR ValidateAudioStreamID(uint16_t audioStreamId) override;
+
+    CHIP_ERROR ValidateVideoStreams(const std::vector<uint16_t>  &videoStreams) override;
+
+    CHIP_ERROR ValidateAudioStreams(const std::vector<uint16_t>  &audioStreams) override;
 
     CHIP_ERROR IsStreamUsageSupported(StreamUsageEnum streamUsage) override;
 
@@ -127,6 +129,8 @@ private:
     CHIP_ERROR AcquireAudioVideoStreams(uint16_t sessionId);
 
     CHIP_ERROR ReleaseAudioVideoStreams(uint16_t sessionId);
+
+    void CleanupSession(uint16_t sessionId);
 
     static void OnDeviceConnected(void * context, chip::Messaging::ExchangeManager  &exchangeMgr,
                                   const chip::SessionHandle  &sessionHandle);

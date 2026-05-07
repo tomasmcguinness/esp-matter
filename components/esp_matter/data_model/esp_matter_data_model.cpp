@@ -40,7 +40,7 @@
 #include <credentials/GroupDataProviderImpl.h>
 #include <lib/core/DataModelTypes.h>
 #include <lib/core/TLV.h>
-#include <lib/support/ScopedBuffer.h>
+#include <lib/support/ScopedMemoryBuffer.h>
 #include "support/CodeUtils.h"
 
 #define ESP_MATTER_MAX_DEVICE_TYPE_COUNT CONFIG_ESP_MATTER_MAX_DEVICE_TYPE_COUNT
@@ -967,9 +967,8 @@ esp_err_t get_val(uint16_t endpoint_id, uint32_t cluster_id, uint32_t attribute_
     chip::DataVersion version = chip::DataVersion();
     chip::app::AttributeValueEncoder encoder(reportBuilder, subjectDescriptor, concrete_path, version);
 
-    chip::app::DataModel::ReadAttributeRequest request;
-    request.path = concrete_path;
-    request.readFlags = chip::app::DataModel::ReadFlags::kFabricFiltered;
+    chip::app::DataModel::ReadAttributeRequest request(concrete_path, subjectDescriptor);
+    request.readFlags.Set(chip::app::DataModel::ReadFlags::kFabricFiltered);
 
     chip::app::DataModel::ActionReturnStatus action_return_status = esp_matter::data_model::provider::get_instance().ReadAttribute(request, encoder);
 
@@ -1039,7 +1038,6 @@ esp_matter_val_type_t get_val_type(uint16_t endpoint_id, uint32_t cluster_id, ui
     return get_val_type(get(endpoint_id, cluster_id, attribute_id));
 }
 
-// Helper function: Set value via WriteAttribute with kInternal flag (for SCI/AAI writable attributes)
 static esp_err_t set_val_via_write_attribute(uint16_t endpoint_id, uint32_t cluster_id,
                                              uint32_t attribute_id, esp_matter_attr_val_t *val)
 {
@@ -1068,12 +1066,9 @@ static esp_err_t set_val_via_write_attribute(uint16_t endpoint_id, uint32_t clus
     VerifyOrReturnError(reader.EnterContainer(outerContainer) == CHIP_NO_ERROR, ESP_FAIL);
     VerifyOrReturnError(reader.Next() == CHIP_NO_ERROR, ESP_FAIL);
 
-    // create write request and call WriteAttribute through the provider
-    chip::app::DataModel::WriteAttributeRequest request;
-    request.path = chip::app::ConcreteDataAttributePath(endpoint_id, cluster_id, attribute_id);
-    request.operationFlags.Set(chip::app::DataModel::OperationFlags::kInternal);
-
     chip::Access::SubjectDescriptor subjectDescriptor;
+    chip::app::ConcreteDataAttributePath data_path(endpoint_id, cluster_id, attribute_id);
+    chip::app::DataModel::WriteAttributeRequest request(data_path, subjectDescriptor);
     chip::app::AttributeValueDecoder decoder(reader, subjectDescriptor);
 
     // we need to ensure locks are in place to avoid assertion errors

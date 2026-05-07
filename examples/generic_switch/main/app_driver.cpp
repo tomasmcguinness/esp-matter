@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include <esp_matter.h>
-#include <app-common/zap-generated/attributes/Accessors.h>
 
 #include <app_priv.h>
 #include <iot_button.h>
@@ -28,6 +27,15 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "app_driver";
+
+static void driver_set_switch_current_position(uint16_t endpoint_id, uint8_t position)
+{
+    esp_matter_attr_val_t val = esp_matter_uint8(position);
+    esp_err_t err = esp_matter::attribute::update(endpoint_id, Switch::Id, Switch::Attributes::CurrentPosition::Id, &val);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Switch CurrentPosition update failed: %s", esp_err_to_name(err));
+    }
+}
 
 esp_err_t app_driver_attribute_update(app_driver_handle_t driver_handle, uint16_t endpoint_id, uint32_t cluster_id,
                                       uint32_t attribute_id, esp_matter_attr_val_t *val)
@@ -47,7 +55,7 @@ static void app_driver_button_switch_latched(void *arg, void *data)
     uint8_t newPosition = (latching_switch_previous_position == 1) ? 0 : 1;
     latching_switch_previous_position = newPosition;
     chip::DeviceLayer::SystemLayer().ScheduleLambda([switch_endpoint_id, newPosition]() {
-        chip::app::Clusters::Switch::Attributes::CurrentPosition::Set(switch_endpoint_id, newPosition);
+        driver_set_switch_current_position(static_cast<uint16_t>(switch_endpoint_id), newPosition);
         // SwitchLatched event takes newPosition as event data
         switch_cluster::event::send_switch_latched(switch_endpoint_id, newPosition);
     });
@@ -67,7 +75,7 @@ static void app_driver_button_initial_pressed(void *arg, void *data)
         // Press moves Position from 0 (idle) to 1 (press)
         uint8_t newPosition     = 1;
         chip::DeviceLayer::SystemLayer().ScheduleLambda([switch_endpoint_id, newPosition]() {
-            chip::app::Clusters::Switch::Attributes::CurrentPosition::Set(switch_endpoint_id, newPosition);
+            driver_set_switch_current_position(static_cast<uint16_t>(switch_endpoint_id), newPosition);
             // InitialPress event takes newPosition as event data
             switch_cluster::event::send_initial_press(switch_endpoint_id, newPosition);
         });
@@ -81,21 +89,7 @@ static void app_driver_button_release(void *arg, void *data)
     gpio_button *button = (gpio_button *)data;
     int switch_endpoint_id = (button != NULL) ? get_endpoint(button) : 1;
     chip::DeviceLayer::SystemLayer().ScheduleLambda([switch_endpoint_id]() {
-        chip::app::Clusters::Switch::Attributes::CurrentPosition::Set(switch_endpoint_id, idlePosition);
-    });
-}
-
-static void app_driver_button_long_pressed(void *arg, void *data)
-{
-    ESP_LOGI(TAG, "Long button pressed ");
-    gpio_button *button = (gpio_button *)data;
-    int switch_endpoint_id = (button != NULL) ? get_endpoint(button) : 1;
-    // Press moves Position from 0 (idle) to 1 (press)
-    uint8_t newPosition = 1;
-    chip::DeviceLayer::SystemLayer().ScheduleLambda([switch_endpoint_id, newPosition]() {
-        chip::app::Clusters::Switch::Attributes::CurrentPosition::Set(switch_endpoint_id, newPosition);
-        // LongPress event takes newPosition as event data
-        switch_cluster::event::send_long_press(switch_endpoint_id, newPosition);
+        driver_set_switch_current_position(static_cast<uint16_t>(switch_endpoint_id), idlePosition);
     });
 }
 
@@ -121,7 +115,7 @@ static void app_driver_button_multipress_ongoing(void *arg, void *data)
     uint32_t as_feature_map = switch_cluster::feature::action_switch::get_id();
     if (((feature_map & msm_feature_map) == msm_feature_map) && ((feature_map & as_feature_map) != as_feature_map)) {
         chip::DeviceLayer::SystemLayer().ScheduleLambda([switch_endpoint_id, newPosition]() {
-            chip::app::Clusters::Switch::Attributes::CurrentPosition::Set(switch_endpoint_id, newPosition);
+            driver_set_switch_current_position(static_cast<uint16_t>(switch_endpoint_id), newPosition);
             // MultiPress Ongoing event takes newPosition and current_number_of_presses_counted as event data
             switch_cluster::event::send_multi_press_ongoing(switch_endpoint_id, newPosition, current_number_of_presses_counted);
         });
@@ -146,7 +140,7 @@ static void app_driver_button_multipress_complete(void *arg, void *data)
     uint8_t multipress_max = val.val.u8;
     int total_number_of_presses_counted = (current_number_of_presses_counted > multipress_max) ? 0 : current_number_of_presses_counted;
     chip::DeviceLayer::SystemLayer().ScheduleLambda([switch_endpoint_id, previousPosition, total_number_of_presses_counted]() {
-        chip::app::Clusters::Switch::Attributes::CurrentPosition::Set(switch_endpoint_id, idlePosition);
+        driver_set_switch_current_position(static_cast<uint16_t>(switch_endpoint_id), idlePosition);
         // MultiPress Complete event takes previousPosition and total_number_of_presses_counted as event data
         switch_cluster::event::send_multi_press_complete(switch_endpoint_id, previousPosition, total_number_of_presses_counted);
         // Reset current_number_of_presses_counted to initial value

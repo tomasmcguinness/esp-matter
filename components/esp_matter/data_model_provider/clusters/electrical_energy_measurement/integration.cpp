@@ -20,11 +20,14 @@
 #include "app/clusters/electrical-energy-measurement-server/ElectricalEnergyMeasurementCluster.h"
 #include "app/server-cluster/ServerClusterInterfaceRegistry.h"
 #include "clusters/ElectricalEnergyMeasurement/Enums.h"
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 using namespace chip;
 using namespace chip::app;
 using namespace chip::app::Clusters;
 using namespace chip::app::Clusters::ElectricalEnergyMeasurement;
+using namespace chip::app::Clusters::ElectricalEnergyMeasurement::Structs;
 
 namespace {
 std::unordered_map<EndpointId, LazyRegisteredServerCluster<ElectricalEnergyMeasurementCluster>> gServers;
@@ -41,19 +44,7 @@ uint32_t get_feature_map(esp_matter::cluster_t *cluster)
     }
     return 0;
 }
-ElectricalEnergyMeasurementCluster::Config GetClusterConfig(EndpointId endpointId)
-{
-    ElectricalEnergyMeasurementCluster::Config config;
-    config.endpointId = endpointId;
-    esp_matter::cluster_t *cluster = esp_matter::cluster::get(endpointId, ElectricalEnergyMeasurement::Id);
-    config.featureFlags = BitMask<ElectricalEnergyMeasurement::Feature>(get_feature_map(cluster));
-    if (esp_matter::attribute::get(cluster, Attributes::CumulativeEnergyReset::Id)) {
-        config.optionalAttributes.SetField(OptionalAttributes::kOptionalAttributeCumulativeEnergyReset, 1);
-    } else {
-        config.optionalAttributes.Clear(OptionalAttributes::kOptionalAttributeCumulativeEnergyReset);
-    }
-    return config;
-}
+
 } // namespace
 
 namespace chip::app::Clusters::ElectricalEnergyMeasurement {
@@ -122,8 +113,28 @@ void ESPMatterElectricalEnergyMeasurementClusterServerInitCallback(EndpointId en
     if (gServers[endpoint].IsConstructed()) {
         return;
     }
-    ElectricalEnergyMeasurementCluster::Config config = GetClusterConfig(endpoint);
-    gServers[endpoint].Create(config);
+
+    const MeasurementAccuracyStruct::Type kDefaultAccuracy = {};
+
+    esp_matter::cluster_t *cluster = esp_matter::cluster::get(endpoint, ElectricalEnergyMeasurement::Id);
+    VerifyOrReturn(cluster != nullptr,
+                   ChipLogError(AppServer,
+                                "ElectricalEnergyMeasurement: cluster missing in esp-matter data model for endpoint %u",
+                                endpoint));
+
+    BitMask<ElectricalEnergyMeasurement::OptionalAttributes> optionalAttrs;
+    if (esp_matter::attribute::get(cluster, Attributes::CumulativeEnergyReset::Id)) {
+        optionalAttrs.SetField(OptionalAttributes::kOptionalAttributeCumulativeEnergyReset, 1);
+    } else {
+        optionalAttrs.Clear(OptionalAttributes::kOptionalAttributeCumulativeEnergyReset);
+    }
+
+    gServers[endpoint].Create(ElectricalEnergyMeasurementCluster::Config{
+        .endpointId         = endpoint,
+        .featureFlags       = BitMask<ElectricalEnergyMeasurement::Feature>(get_feature_map(cluster)),
+        .optionalAttributes = optionalAttrs,
+        .accuracyStruct     = kDefaultAccuracy,
+    });
     CHIP_ERROR err =
         esp_matter::data_model::provider::get_instance().registry().Register(gServers[endpoint].Registration());
     if (err != CHIP_NO_ERROR) {

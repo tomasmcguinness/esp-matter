@@ -19,7 +19,6 @@ endif (CONFIG_ENABLE_ESP_DIAGNOSTICS_TRACE)
 
 idf_component_register(SRC_DIRS          ${SRC_DIRS_LIST}
                       PRIV_INCLUDE_DIRS  "." "${ESP_MATTER_PATH}/examples/common/utils" ${PRIV_INCLUDE_DIRS_LIST}
-                    #   PRIV_REQUIRES      ${PRIV_REQUIRES_LIST}
                       INCLUDE_DIRS       ${INCLUDE_DIRS_LIST}
                       LDFRAGMENTS        "${ldfragments}")
 

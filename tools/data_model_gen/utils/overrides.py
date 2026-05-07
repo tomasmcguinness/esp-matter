@@ -21,6 +21,8 @@ from utils.conversion_utils import convert_to_int
 COMMAND_CALLBACK_SKIP: FrozenSet[int] = frozenset(
     [
         0x0039,  # bridged_device_basic_information
+        0x0450,  # network_identity_management
+        0x0064,  # temperature_alarm
     ]
 )
 

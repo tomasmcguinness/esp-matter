@@ -121,22 +121,6 @@ CHIP_ERROR MockCameraAVSettingsUserLevelManagementDelegate::PersistentAttributes
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR MockCameraAVSettingsUserLevelManagementDelegate::LoadMPTZPresets(std::vector<MPTZPresetHelper>  &mptzPresetHelpers)
-{
-    // Implement your own logic here.
-    ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
-    mptzPresetHelpers.clear();
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR MockCameraAVSettingsUserLevelManagementDelegate::LoadDPTZStreams(std::vector<DPTZStruct>  &dptzStreams)
-{
-    // Implement your own logic here.
-    ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
-    dptzStreams.clear();
-    return CHIP_NO_ERROR;
-}
-
 } // namespace CameraAvSettingsUserLevelManagement
 } // namespace Clusters
 } // namespace app

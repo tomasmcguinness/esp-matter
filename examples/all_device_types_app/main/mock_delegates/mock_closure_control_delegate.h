@@ -8,17 +8,14 @@
 
 #pragma once
 
-#include <app/clusters/closure-control-server/closure-control-cluster-delegate.h>
+#include <app/clusters/closure-control-server/ClosureControlClusterDelegate.h>
 #include <protocols/interaction_model/StatusCode.h>
 
 /*
  * Mock ClosureControl Delegate Implementation
- * This file provides a mock implementation of the ClosureControl::Delegate interface
+ * This file provides a mock implementation of the ClosureControlClusterDelegate interface
  * that returns success for all methods.
- * For more details, take a look at the delegate interface in the Matter SDK.
- * 1. Delegate Interface: https://github.com/project-chip/connectedhomeip/blob/d144bbb/src/app/clusters/closure-control-server/closure-control-cluster-delegate.h
- * 2. Delegate Implementation: https://github.com/project-chip/connectedhomeip/blob/d144bbb/examples/closure-app/closure-common/include/ClosureControlEndpoint.h and
- *    https://github.com/project-chip/connectedhomeip/blob/d144bbb/examples/closure-app/closure-common/src/ClosureControlEndpoint.cpp
+ * For more details, take a look at ClosureControlClusterDelegate.h in the Matter SDK.
  */
 
 namespace chip {
@@ -26,9 +23,9 @@ namespace app {
 namespace Clusters {
 namespace ClosureControl {
 
-class MockClosureControlDelegate : public DelegateBase {
+class MockClosureControlDelegate : public ClosureControlClusterDelegate {
 public:
-    MockClosureControlDelegate() : DelegateBase() {}
+    MockClosureControlDelegate() : ClosureControlClusterDelegate() {}
     virtual ~MockClosureControlDelegate() = default;
 
     // Closure control command handlers

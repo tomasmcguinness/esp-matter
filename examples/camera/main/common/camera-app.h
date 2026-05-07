@@ -50,7 +50,7 @@ private:
     std::unique_ptr<chip::app::Clusters::CameraAvStreamManagement::CameraAVStreamManagementCluster> mAVStreamMgmtServerPtr;
 
     // Helper to set attribute defaults for CameraAVStreamMgmt
-    void InitializeCameraAVStreamMgmt();
+    CHIP_ERROR InitializeCameraAVStreamMgmt();
 };
 
 void CameraAppInit(CameraDeviceInterface * cameraDevice);

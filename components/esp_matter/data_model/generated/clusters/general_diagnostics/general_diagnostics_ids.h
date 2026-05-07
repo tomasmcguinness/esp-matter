@@ -57,6 +57,9 @@ inline constexpr uint32_t Id = 0x0007;
 namespace TestEventTriggersEnabled {
 inline constexpr uint32_t Id = 0x0008;
 } /* TestEventTriggersEnabled */
+namespace DeviceLoadStatus {
+inline constexpr uint32_t Id = 0x000A;
+} /* DeviceLoadStatus */
 } /* attribute */
 
 namespace command {

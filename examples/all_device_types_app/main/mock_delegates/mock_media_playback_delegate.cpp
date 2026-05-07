@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_media_playback_delegate.h"
 
@@ -98,7 +99,7 @@ void MockMediaPlaybackDelegate::HandlePlay(CommandResponseHelper<Commands::Playb
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandlePause(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper)
@@ -107,7 +108,7 @@ void MockMediaPlaybackDelegate::HandlePause(CommandResponseHelper<Commands::Play
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleStop(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper)
@@ -116,7 +117,7 @@ void MockMediaPlaybackDelegate::HandleStop(CommandResponseHelper<Commands::Playb
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleFastForward(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper,
@@ -126,7 +127,7 @@ void MockMediaPlaybackDelegate::HandleFastForward(CommandResponseHelper<Commands
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandlePrevious(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper)
@@ -135,7 +136,7 @@ void MockMediaPlaybackDelegate::HandlePrevious(CommandResponseHelper<Commands::P
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleRewind(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper,
@@ -145,7 +146,7 @@ void MockMediaPlaybackDelegate::HandleRewind(CommandResponseHelper<Commands::Pla
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleSkipBackward(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper,
@@ -155,7 +156,7 @@ void MockMediaPlaybackDelegate::HandleSkipBackward(CommandResponseHelper<Command
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleSkipForward(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper,
@@ -165,7 +166,7 @@ void MockMediaPlaybackDelegate::HandleSkipForward(CommandResponseHelper<Commands
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleSeek(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper,
@@ -175,7 +176,7 @@ void MockMediaPlaybackDelegate::HandleSeek(CommandResponseHelper<Commands::Playb
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleNext(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper)
@@ -184,7 +185,7 @@ void MockMediaPlaybackDelegate::HandleNext(CommandResponseHelper<Commands::Playb
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockMediaPlaybackDelegate::HandleStartOver(CommandResponseHelper<Commands::PlaybackResponse::Type>  &helper)
@@ -193,7 +194,7 @@ void MockMediaPlaybackDelegate::HandleStartOver(CommandResponseHelper<Commands::
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::PlaybackResponse::Type response;
     response.status = MediaPlaybackStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 bool MockMediaPlaybackDelegate::HandleActivateAudioTrack(const chip::CharSpan  &trackId, const uint8_t  &audioOutputIndex)

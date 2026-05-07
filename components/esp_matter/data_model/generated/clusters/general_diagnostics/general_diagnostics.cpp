@@ -36,7 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "general_diagnostics_cluster";
-constexpr uint16_t cluster_revision = 2;
+constexpr uint16_t cluster_revision = 3;
 
 namespace esp_matter {
 namespace cluster {
@@ -114,6 +114,11 @@ attribute_t *create_active_network_faults(cluster_t *cluster, uint8_t *value, ui
 attribute_t *create_test_event_triggers_enabled(cluster_t *cluster, bool value)
 {
     return esp_matter::attribute::create(cluster, TestEventTriggersEnabled::Id, ATTRIBUTE_FLAG_NONE, esp_matter_bool(value));
+}
+
+attribute_t *create_device_load_status(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
+{
+    return esp_matter::attribute::create(cluster, DeviceLoadStatus::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_array(value, length, count));
 }
 
 } /* attribute */
@@ -196,6 +201,7 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         attribute::create_up_time(cluster, config->up_time);
         attribute::create_test_event_triggers_enabled(cluster, config->test_event_triggers_enabled);
         attribute::create_network_interfaces(cluster, NULL, 0, 0);
+        attribute::create_device_load_status(cluster, NULL, 0, 0);
         command::create_test_event_trigger(cluster);
         command::create_time_snapshot(cluster);
         command::create_time_snapshot_response(cluster);

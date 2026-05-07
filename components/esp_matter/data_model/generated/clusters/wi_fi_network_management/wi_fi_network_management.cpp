@@ -26,6 +26,7 @@
 #include <wi_fi_network_management_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -44,12 +45,14 @@ namespace wi_fi_network_management {
 namespace attribute {
 attribute_t *create_ssid(cluster_t *cluster, uint8_t *value, uint16_t length)
 {
-    return esp_matter::attribute::create(cluster, SSID::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY | ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_octet_str(value, length));
+    return esp_matter::attribute::create(cluster, SSID::Id, ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_octet_str(value, length));
 }
 
 attribute_t *create_passphrase_surrogate(cluster_t *cluster, nullable<uint64_t> value)
 {
-    return esp_matter::attribute::create(cluster, PassphraseSurrogate::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY | ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_nullable_uint64(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, PassphraseSurrogate::Id, ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_nullable_uint64(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint64(0), esp_matter_nullable_uint64(4294967294));
+    return attribute;
 }
 
 } /* attribute */
@@ -92,10 +95,13 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
-        attribute::create_ssid(cluster, NULL, 0);
-        attribute::create_passphrase_surrogate(cluster, 0);
+        attribute::create_ssid(cluster, config->ssid, sizeof(config->ssid));
+        attribute::create_passphrase_surrogate(cluster, config->passphrase_surrogate);
         command::create_network_passphrase_request(cluster);
         command::create_network_passphrase_response(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterWiFiNetworkManagementClusterServerInitCallback,
+                                                 ESPMatterWiFiNetworkManagementClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

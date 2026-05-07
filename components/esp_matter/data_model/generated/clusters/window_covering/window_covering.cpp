@@ -37,7 +37,7 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "window_covering_cluster";
-constexpr uint16_t cluster_revision = 7;
+constexpr uint16_t cluster_revision = 8;
 
 static esp_err_t esp_matter_command_callback_up_or_open(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                         void *opaque_ptr)

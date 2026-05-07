@@ -16,7 +16,6 @@
 #include <app/clusters/boolean-state-server/BooleanStateCluster.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
 #include <unordered_map>
-#include "integration.h"
 
 using namespace chip;
 using namespace chip::app;
@@ -56,15 +55,3 @@ void ESPMatterBooleanStateClusterServerShutdownCallback(EndpointId endpointId, C
 void MatterBooleanStatePluginServerInitCallback() {}
 
 void MatterBooleanStatePluginServerShutdownCallback() {}
-
-namespace chip::app::Clusters::BooleanState {
-
-BooleanStateCluster * FindClusterOnEndpoint(EndpointId endpointId)
-{
-    if (gServers[endpointId].IsConstructed()) {
-        return &gServers[endpointId].Cluster();
-    }
-    return nullptr;
-}
-
-} // namespace chip::app::Clusters::BooleanState

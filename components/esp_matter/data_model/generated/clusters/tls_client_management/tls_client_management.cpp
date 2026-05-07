@@ -26,6 +26,7 @@
 #include <tls_client_management_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -44,7 +45,9 @@ namespace tls_client_management {
 namespace attribute {
 attribute_t *create_max_provisioned(cluster_t *cluster, uint8_t value)
 {
-    return esp_matter::attribute::create(cluster, MaxProvisioned::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, MaxProvisioned::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(5), esp_matter_uint8(254));
+    return attribute;
 }
 
 attribute_t *create_provisioned_endpoints(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
@@ -101,13 +104,16 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
-        attribute::create_max_provisioned(cluster, 0);
+        attribute::create_max_provisioned(cluster, config->max_provisioned);
         attribute::create_provisioned_endpoints(cluster, NULL, 0, 0);
         command::create_provision_endpoint(cluster);
         command::create_provision_endpoint_response(cluster);
         command::create_find_endpoint(cluster);
         command::create_find_endpoint_response(cluster);
         command::create_remove_endpoint(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterTlsClientManagementClusterServerInitCallback,
+                                                 ESPMatterTlsClientManagementClusterServerShutdownCallback);
     }
 
     return cluster;

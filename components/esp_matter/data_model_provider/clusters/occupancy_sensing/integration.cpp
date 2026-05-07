@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "integration.h"
 #include "esp_matter_attribute_utils.h"
 #include "esp_matter_data_model_priv.h"
 #include <esp_matter_data_model.h>
@@ -100,18 +99,6 @@ void ESPMatterOccupancySensingClusterServerShutdownCallback(EndpointId endpointI
     }
     gServers[endpointId].Destroy();
 }
-
-namespace chip::app::Clusters::OccupancySensing {
-
-OccupancySensingCluster *FindClusterOnEndpoint(EndpointId endpointId)
-{
-    if (gServers[endpointId].IsConstructed()) {
-        return &gServers[endpointId].Cluster();
-    }
-    return nullptr;
-}
-
-} // namespace chip::app::Clusters::OccupancySensing
 
 void MatterOccupancySensingPluginServerInitCallback()
 {

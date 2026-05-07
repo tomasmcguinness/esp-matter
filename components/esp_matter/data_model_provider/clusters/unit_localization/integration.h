@@ -20,7 +20,11 @@ namespace chip::app::Clusters::UnitLocalization {
 
 class UnitLocalizationServer : public UnitLocalizationCluster {
 public:
+    UnitLocalizationServer(EndpointId endpointId, const BitFlags<UnitLocalization::Feature> features) :
+        UnitLocalizationCluster(endpointId, features)
+    {
+    }
     static UnitLocalizationServer  &Instance();
 };
 
-}
+} // namespace chip::app::Clusters::UnitLocalization

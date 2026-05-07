@@ -21,16 +21,34 @@ using namespace chip::app::Clusters;
 using namespace chip::app::Clusters::Chime;
 
 namespace chip::app::Clusters::Chime {
+
 ChimeServer::~ChimeServer()
 {
+    if (!mCluster.IsConstructed()) {
+        return;
+    }
     RETURN_SAFELY_IGNORED esp_matter::data_model::provider::get_instance().registry().Unregister(&(mCluster.Cluster()));
 }
 
 CHIP_ERROR ChimeServer::Init()
 {
-    return esp_matter::data_model::provider::get_instance().registry().Register(mCluster.Registration());
+    if (mCluster.IsConstructed()) {
+        return CHIP_NO_ERROR;
+    }
+
+    SafeAttributePersistenceProvider * provider = GetSafeAttributePersistenceProvider();
+    VerifyOrReturnError(provider != nullptr, CHIP_ERROR_INCORRECT_STATE);
+
+    ChimeCluster::Context context{ .delegate = *mDelegate, .safeAttributePersistenceProvider = *provider };
+    mCluster.Create(mEndpointId, context);
+
+    CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(mCluster.Registration());
+    if (err != CHIP_NO_ERROR) {
+        mCluster.Destroy();
+    }
+    return err;
 }
-} // namespace chip::app::Clusters
+} // namespace chip::app::Clusters::Chime
 void ESPMatterChimeClusterServerInitCallback(EndpointId) {}
 void ESPMatterChimeClusterServerShutdownCallback(EndpointId, ClusterShutdownType) {}
 

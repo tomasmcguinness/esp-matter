@@ -28,8 +28,12 @@ esp_err_t add(cluster_t *cluster);
 } /* positioning */
 
 namespace motion_latching {
+typedef struct config {
+    uint8_t latch_control_modes;
+    config() : latch_control_modes(0) {}
+} config_t;
 uint32_t get_id();
-esp_err_t add(cluster_t *cluster);
+esp_err_t add(cluster_t *cluster, config_t *config);
 } /* motion_latching */
 
 namespace instantaneous {
@@ -92,9 +96,13 @@ event_t *create_secure_state_changed(cluster_t *cluster);
 } /* event */
 
 typedef struct config {
+    uint8_t main_state;
     void *delegate;
+    struct {
+        feature::motion_latching::config_t motion_latching;
+    } features;
     uint32_t feature_flags;
-    config() : delegate(nullptr), feature_flags(0) {}
+    config() : main_state(0), delegate(nullptr), feature_flags(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

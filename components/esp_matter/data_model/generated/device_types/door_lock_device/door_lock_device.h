@@ -24,7 +24,7 @@
 #include <esp_matter_core.h>
 
 #define ESP_MATTER_DOOR_LOCK_DEVICE_TYPE_ID 0x000A
-#define ESP_MATTER_DOOR_LOCK_DEVICE_TYPE_VERSION 3
+#define ESP_MATTER_DOOR_LOCK_DEVICE_TYPE_VERSION 4
 
 namespace esp_matter {
 namespace endpoint {

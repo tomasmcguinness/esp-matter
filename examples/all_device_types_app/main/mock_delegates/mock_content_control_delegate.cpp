@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_content_control_delegate.h"
 
@@ -83,7 +84,7 @@ void MockContentControlDelegate::HandleResetPIN(CommandResponseHelper<Commands::
     // Implement your own logic here.
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::ResetPINResponse::Type response;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockContentControlDelegate::HandleEnable()

@@ -96,10 +96,6 @@ attribute_t *create_physical_contact_unoccupied_to_occupied_delay(cluster_t *clu
 attribute_t *create_physical_contact_unoccupied_to_occupied_threshold(cluster_t *cluster, uint8_t value);
 } /* attribute */
 
-namespace event {
-event_t *create_occupancy_changed(cluster_t *cluster);
-} /* event */
-
 typedef struct config {
     uint8_t occupancy;
     uint8_t occupancy_sensor_type;

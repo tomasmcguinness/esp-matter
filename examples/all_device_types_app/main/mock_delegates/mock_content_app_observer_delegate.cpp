@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_content_app_observer_delegate.h"
 
@@ -22,7 +23,7 @@ void MockContentAppObserverDelegate::HandleContentAppMessage(CommandResponseHelp
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
 
     Commands::ContentAppMessageResponse::Type response;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
     return;
 }
 

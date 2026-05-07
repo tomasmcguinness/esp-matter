@@ -27,6 +27,9 @@
 #include <lib/support/BitFlags.h>
 #include <lib/support/CodeUtils.h>
 
+#include <app/server/Server.h>
+#include <platform/DiagnosticDataProvider.h>
+
 using namespace chip;
 using namespace chip::app;
 using namespace chip::app::Clusters;
@@ -80,6 +83,8 @@ bool IsClusterEnabled(EndpointId endpointId, ClusterId clusterId)
 void ESPMatterGeneralDiagnosticsClusterServerInitCallback(EndpointId endpointId)
 {
     VerifyOrDie(endpointId == kRootEndpointId);
+    chip::app::InteractionModelEngine * interactionModel = chip::app::InteractionModelEngine::GetInstance();
+    VerifyOrDie(interactionModel != nullptr);
     GeneralDiagnosticsCluster::OptionalAttributeSet attrSet;
     if (IsAttributeEnabled(endpointId, GeneralDiagnostics::Attributes::TotalOperationalHours::Id)) {
         attrSet.Set<GeneralDiagnostics::Attributes::TotalOperationalHours::Id>();
@@ -114,11 +119,19 @@ void ESPMatterGeneralDiagnosticsClusterServerInitCallback(EndpointId endpointId)
             IsCommandEnabled(endpointId, GeneralDiagnostics::Commands::PayloadTestRequest::Id, COMMAND_FLAG_ACCEPTED),
         };
 
-        gServer.fullConfigurableServer.Create(attrSet, featureFlags, InteractionModelEngine::GetInstance(), functionsConfig);
+        gServer.fullConfigurableServer.Create(attrSet, featureFlags, GeneralDiagnosticsCluster::Context{
+            .deviceLoadStatusProvider = *interactionModel,
+            .diagnosticDataProvider   = DeviceLayer::GetDiagnosticDataProvider(),
+            .testEventTriggerDelegate = Server::GetInstance().GetTestEventTriggerDelegate(),
+        }, functionsConfig);
         err = esp_matter::data_model::provider::get_instance().registry().Register(
                   gServer.fullConfigurableServer.Registration());
     } else {
-        gServer.server.Create(attrSet, featureFlags, InteractionModelEngine::GetInstance());
+        gServer.server.Create(attrSet, featureFlags,  GeneralDiagnosticsCluster::Context{
+            .deviceLoadStatusProvider = *interactionModel,
+            .diagnosticDataProvider   = DeviceLayer::GetDiagnosticDataProvider(),
+            .testEventTriggerDelegate = Server::GetInstance().GetTestEventTriggerDelegate(),
+        });
         err = esp_matter::data_model::provider::get_instance().registry().Register(gServer.server.Registration());
     }
     if (err != CHIP_NO_ERROR) {

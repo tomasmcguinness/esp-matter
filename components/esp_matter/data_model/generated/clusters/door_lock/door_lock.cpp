@@ -37,7 +37,7 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "door_lock_cluster";
-constexpr uint16_t cluster_revision = 9;
+constexpr uint16_t cluster_revision = 10;
 
 static esp_err_t esp_matter_command_callback_lock_door(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                        void *opaque_ptr)
@@ -171,72 +171,6 @@ static esp_err_t esp_matter_command_callback_clear_holiday_schedule(const Concre
     return ESP_OK;
 }
 
-static esp_err_t esp_matter_command_callback_set_user(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                      void *opaque_ptr)
-{
-    chip::app::Clusters::DoorLock::Commands::SetUser::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfDoorLockClusterSetUserCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_get_user(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                      void *opaque_ptr)
-{
-    chip::app::Clusters::DoorLock::Commands::GetUser::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfDoorLockClusterGetUserCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_clear_user(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                        void *opaque_ptr)
-{
-    chip::app::Clusters::DoorLock::Commands::ClearUser::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfDoorLockClusterClearUserCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_set_credential(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                            void *opaque_ptr)
-{
-    chip::app::Clusters::DoorLock::Commands::SetCredential::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfDoorLockClusterSetCredentialCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_get_credential_status(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                                   void *opaque_ptr)
-{
-    chip::app::Clusters::DoorLock::Commands::GetCredentialStatus::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfDoorLockClusterGetCredentialStatusCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_clear_credential(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                              void *opaque_ptr)
-{
-    chip::app::Clusters::DoorLock::Commands::ClearCredential::DecodableType command_data;
-    CHIP_ERROR error = Decode(tlv_data, command_data);
-    if (error == CHIP_NO_ERROR) {
-        emberAfDoorLockClusterClearCredentialCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
 static esp_err_t esp_matter_command_callback_unbolt_door(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                          void *opaque_ptr)
 {
@@ -289,34 +223,11 @@ esp_err_t add(cluster_t *cluster, config_t *config)
     attribute::create_number_of_pin_users_supported(cluster, config->number_of_pin_users_supported);
     attribute::create_max_pin_code_length(cluster, config->max_pin_code_length);
     attribute::create_min_pin_code_length(cluster, config->min_pin_code_length);
-    attribute::create_wrong_code_entry_limit(cluster, config->wrong_code_entry_limit);
-    attribute::create_user_code_temporary_disable_time(cluster, config->user_code_temporary_disable_time);
     attribute::create_require_pin_for_remote_operation(cluster, config->require_pin_for_remote_operation);
 
     return ESP_OK;
 }
 } /* pin_credential */
-
-namespace rfid_credential {
-uint32_t get_id()
-{
-    return RFIDCredential::Id;
-}
-
-esp_err_t add(cluster_t *cluster, config_t *config)
-{
-    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
-    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
-    update_feature_map(cluster, get_id());
-    attribute::create_number_of_rfid_users_supported(cluster, config->number_of_rfid_users_supported);
-    attribute::create_max_rfid_code_length(cluster, config->max_rfid_code_length);
-    attribute::create_min_rfid_code_length(cluster, config->min_rfid_code_length);
-    attribute::create_wrong_code_entry_limit(cluster, config->wrong_code_entry_limit);
-    attribute::create_user_code_temporary_disable_time(cluster, config->user_code_temporary_disable_time);
-
-    return ESP_OK;
-}
-} /* rfid_credential */
 
 namespace weekday_access_schedules {
 uint32_t get_id()
@@ -373,37 +284,6 @@ esp_err_t add(cluster_t *cluster, config_t *config)
     return ESP_OK;
 }
 } /* credential_over_the_air_access */
-
-namespace user {
-uint32_t get_id()
-{
-    return User::Id;
-}
-
-esp_err_t add(cluster_t *cluster, config_t *config)
-{
-    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
-    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnError((has_feature(aliro_provisioning) || ((has_feature(pin_credential)) || (has_feature(rfid_credential)))), ESP_ERR_INVALID_ARG);
-    update_feature_map(cluster, get_id());
-    attribute::create_number_of_total_users_supported(cluster, config->number_of_total_users_supported);
-    attribute::create_credential_rules_support(cluster, config->credential_rules_support);
-    attribute::create_number_of_credentials_supported_per_user(cluster, config->number_of_credentials_supported_per_user);
-    command::create_set_user(cluster);
-    command::create_get_user(cluster);
-    command::create_get_user_response(cluster);
-    command::create_clear_user(cluster);
-    command::create_set_credential(cluster);
-    command::create_set_credential_response(cluster);
-    command::create_get_credential_status(cluster);
-    command::create_get_credential_status_response(cluster);
-    command::create_clear_credential(cluster);
-    event::create_lock_user_change(cluster);
-
-    return ESP_OK;
-}
-} /* user */
 
 namespace year_day_access_schedules {
 uint32_t get_id()
@@ -558,29 +438,11 @@ attribute_t *create_open_period(cluster_t *cluster, uint16_t value)
     return attribute;
 }
 
-attribute_t *create_number_of_total_users_supported(cluster_t *cluster, uint16_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, NumberOfTotalUsersSupported::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint16(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint16(0), esp_matter_uint16(65534));
-    return attribute;
-}
-
 attribute_t *create_number_of_pin_users_supported(cluster_t *cluster, uint16_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(pin_credential), NULL);
     attribute_t *attribute = esp_matter::attribute::create(cluster, NumberOfPINUsersSupported::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint16(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint16(0), esp_matter_uint16(65534));
-    return attribute;
-}
-
-attribute_t *create_number_of_rfid_users_supported(cluster_t *cluster, uint16_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(rfid_credential), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, NumberOfRFIDUsersSupported::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint16(value));
     esp_matter::attribute::add_bounds(attribute, esp_matter_uint16(0), esp_matter_uint16(65534));
     return attribute;
 }
@@ -626,42 +488,6 @@ attribute_t *create_min_pin_code_length(cluster_t *cluster, uint8_t value)
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(pin_credential), NULL);
     attribute_t *attribute = esp_matter::attribute::create(cluster, MinPINCodeLength::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_max_rfid_code_length(cluster_t *cluster, uint8_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(rfid_credential), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, MaxRFIDCodeLength::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_min_rfid_code_length(cluster_t *cluster, uint8_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(rfid_credential), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, MinRFIDCodeLength::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_credential_rules_support(cluster_t *cluster, uint8_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, CredentialRulesSupport::Id, ATTRIBUTE_FLAG_NONE, esp_matter_bitmap8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_bitmap8(0), esp_matter_bitmap8(7));
-    return attribute;
-}
-
-attribute_t *create_number_of_credentials_supported_per_user(cluster_t *cluster, uint8_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, NumberOfCredentialsSupportedPerUser::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
     esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(254));
     return attribute;
 }
@@ -741,41 +567,11 @@ attribute_t *create_local_programming_features(cluster_t *cluster, uint8_t value
     return attribute;
 }
 
-attribute_t *create_wrong_code_entry_limit(cluster_t *cluster, uint8_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(((has_feature(pin_credential)) || (has_feature(rfid_credential))), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, WrongCodeEntryLimit::Id, ATTRIBUTE_FLAG_WRITABLE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(1), esp_matter_uint8(255));
-    return attribute;
-}
-
-attribute_t *create_user_code_temporary_disable_time(cluster_t *cluster, uint8_t value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(((has_feature(pin_credential)) || (has_feature(rfid_credential))), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, UserCodeTemporaryDisableTime::Id, ATTRIBUTE_FLAG_WRITABLE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(1), esp_matter_uint8(255));
-    return attribute;
-}
-
-attribute_t *create_send_pin_over_the_air(cluster_t *cluster, bool value)
-{
-    return esp_matter::attribute::create(cluster, SendPINOverTheAir::Id, ATTRIBUTE_FLAG_WRITABLE, esp_matter_bool(value));
-}
-
 attribute_t *create_require_pin_for_remote_operation(cluster_t *cluster, bool value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(((has_feature(credential_over_the_air_access)) && (has_feature(pin_credential))), NULL);
     return esp_matter::attribute::create(cluster, RequirePINforRemoteOperation::Id, ATTRIBUTE_FLAG_WRITABLE, esp_matter_bool(value));
-}
-
-attribute_t *create_expiring_user_timeout(cluster_t *cluster, uint16_t value)
-{
-    attribute_t *attribute = esp_matter::attribute::create(cluster, ExpiringUserTimeout::Id, ATTRIBUTE_FLAG_WRITABLE, esp_matter_uint16(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint16(1), esp_matter_uint16(2880));
-    return attribute;
 }
 
 attribute_t *create_aliro_reader_verification_key(cluster_t *cluster, uint8_t *value, uint16_t length)
@@ -942,69 +738,6 @@ command_t *create_clear_holiday_schedule(cluster_t *cluster)
     return esp_matter::command::create(cluster, ClearHolidaySchedule::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_clear_holiday_schedule);
 }
 
-command_t *create_set_user(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, SetUser::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_set_user);
-}
-
-command_t *create_get_user(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, GetUser::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_get_user);
-}
-
-command_t *create_get_user_response(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, GetUserResponse::Id, COMMAND_FLAG_GENERATED, NULL);
-}
-
-command_t *create_clear_user(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, ClearUser::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_clear_user);
-}
-
-command_t *create_set_credential(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, SetCredential::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_set_credential);
-}
-
-command_t *create_set_credential_response(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, SetCredentialResponse::Id, COMMAND_FLAG_GENERATED, NULL);
-}
-
-command_t *create_get_credential_status(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, GetCredentialStatus::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_get_credential_status);
-}
-
-command_t *create_get_credential_status_response(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, GetCredentialStatusResponse::Id, COMMAND_FLAG_GENERATED, NULL);
-}
-
-command_t *create_clear_credential(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::command::create(cluster, ClearCredential::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_clear_credential);
-}
-
 command_t *create_unbolt_door(cluster_t *cluster)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
@@ -1049,13 +782,6 @@ event_t *create_lock_operation(cluster_t *cluster)
 event_t *create_lock_operation_error(cluster_t *cluster)
 {
     return esp_matter::event::create(cluster, LockOperationError::Id);
-}
-
-event_t *create_lock_user_change(cluster_t *cluster)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(user), NULL);
-    return esp_matter::event::create(cluster, LockUserChange::Id);
 }
 
 } /* event */

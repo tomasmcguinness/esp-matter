@@ -24,7 +24,7 @@
 #include <esp_matter_core.h>
 
 #define ESP_MATTER_THREAD_BORDER_ROUTER_DEVICE_TYPE_ID 0x0091
-#define ESP_MATTER_THREAD_BORDER_ROUTER_DEVICE_TYPE_VERSION 2
+#define ESP_MATTER_THREAD_BORDER_ROUTER_DEVICE_TYPE_VERSION 3
 
 namespace esp_matter {
 namespace endpoint {

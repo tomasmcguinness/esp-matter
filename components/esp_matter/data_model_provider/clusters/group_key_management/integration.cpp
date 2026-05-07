@@ -15,6 +15,11 @@
 #include <app/ClusterCallbacks.h>
 #include <app/clusters/group-key-mgmt-server/GroupKeyManagementCluster.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <app/server-cluster/ServerClusterInterfaceRegistry.h>
+#include <app/server/Server.h>
+
+#include <credentials/GroupDataProvider.h>
+#include <lib/support/CodeUtils.h>
 
 using namespace chip;
 using namespace chip::app;
@@ -29,7 +34,14 @@ void ESPMatterGroupKeyManagementClusterServerInitCallback(EndpointId endpoint)
     // We implement the cluster as a singleton on the root endpoint.
     VerifyOrReturn(endpoint == kRootEndpointId);
 
-    gServer.Create();
+    Credentials::GroupDataProvider * groupDataProvider = Credentials::GetGroupDataProvider();
+    VerifyOrDie(groupDataProvider != nullptr); // we require app main to set this before cluster startup
+
+    gServer.Create(GroupKeyManagementCluster::Context{
+        .fabricTable       = Server::GetInstance().GetFabricTable(),
+        .groupDataProvider = *groupDataProvider,
+    });
+
     CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(gServer.Registration());
     if (err != CHIP_NO_ERROR) {
         ChipLogError(AppServer, "Failed to register GroupKeyManagement - Error: %" CHIP_ERROR_FORMAT, err.Format());

@@ -28,6 +28,10 @@
 #include <platform/ESP32/OTAImageProcessorImpl.h>
 #endif // !CONFIG_CHIP_ENABLE_EXTERNAL_PLATFORM
 
+#if CONFIG_ENABLE_OTA_REQUESTOR && CONFIG_AUTO_UPDATE_RCP && CONFIG_OPENTHREAD_BORDER_ROUTER
+#include "esp_rcp_ota.h"
+#endif
+
 #include <esp_matter.h>
 #include <esp_matter_ota.h>
 #include <zap-generated/endpoint_config.h>
@@ -40,6 +44,69 @@ using chip::Server;
 using chip::DeviceLayer::ExtendedOTARequestorDriver;
 
 using namespace esp_matter;
+
+#if CONFIG_ENABLE_OTA_REQUESTOR && CONFIG_AUTO_UPDATE_RCP && CONFIG_OPENTHREAD_BORDER_ROUTER
+class OTARcpProcessorImpl : public chip::OTAImageProcessorImpl::OTARcpProcessorDelegate {
+public:
+    esp_err_t OnOtaRcpPrepareDownload() override;
+    esp_err_t OnOtaRcpProcessBlock(const uint8_t * buffer, size_t bufLen, size_t  &rcpOtaReceivedLen) override;
+    esp_err_t OnOtaRcpFinalize() override;
+    esp_err_t OnOtaRcpAbort() override;
+
+private:
+    void ResetRcpOtaState()
+    {
+        mRcpOtaHandle          = 0;
+        mBrFirmwareSize        = 0;
+        mRcpFirmwareDownloaded = false;
+    }
+    esp_rcp_ota_handle_t mRcpOtaHandle;
+    bool mRcpFirmwareDownloaded;
+    uint32_t mBrFirmwareSize;
+};
+
+esp_err_t OTARcpProcessorImpl::OnOtaRcpPrepareDownload()
+{
+    ResetRcpOtaState();
+    return esp_rcp_ota_begin(&mRcpOtaHandle);
+}
+
+esp_err_t OTARcpProcessorImpl::OnOtaRcpProcessBlock(const uint8_t * buffer, size_t bufLen, size_t  &rcpOtaReceivedLen)
+{
+    esp_err_t err = ESP_OK;
+
+    if (!mRcpFirmwareDownloaded) {
+        err = esp_rcp_ota_receive(mRcpOtaHandle, buffer, bufLen, &rcpOtaReceivedLen);
+
+        if (esp_rcp_ota_get_state(mRcpOtaHandle) == ESP_RCP_OTA_STATE_FINISHED) {
+            mBrFirmwareSize        = esp_rcp_ota_get_subfile_size(mRcpOtaHandle, FILETAG_HOST_FIRMWARE);
+            mRcpFirmwareDownloaded = true;
+        }
+    } else if (mBrFirmwareSize > 0) {
+        rcpOtaReceivedLen = 0;
+    } else {
+        err = ESP_FAIL;
+    }
+
+    return err;
+}
+
+esp_err_t OTARcpProcessorImpl::OnOtaRcpFinalize()
+{
+    esp_err_t err = esp_rcp_ota_end(mRcpOtaHandle);
+    ResetRcpOtaState();
+    return err;
+}
+
+esp_err_t OTARcpProcessorImpl::OnOtaRcpAbort()
+{
+    esp_err_t err = esp_rcp_ota_abort(mRcpOtaHandle);
+    ResetRcpOtaState();
+    return err;
+}
+
+OTARcpProcessorImpl gOtaRcpDelegate;
+#endif // CONFIG_ENABLE_OTA_REQUESTOR && CONFIG_AUTO_UPDATE_RCP && CONFIG_OPENTHREAD_BORDER_ROUTER
 
 #if CONFIG_ENABLE_OTA_REQUESTOR
 DefaultOTARequestor gRequestorCore;
@@ -103,6 +170,9 @@ void esp_matter_ota_requestor_start(void)
     }
 
     gImageProcessor.SetOTADownloader(&gDownloader);
+#if CONFIG_AUTO_UPDATE_RCP && CONFIG_OPENTHREAD_BORDER_ROUTER
+    gImageProcessor.SetOtaRcpDelegate(&gOtaRcpDelegate);
+#endif
 
     gDownloader.SetImageProcessorDelegate(s_ota_requestor_impl.image_processor);
 

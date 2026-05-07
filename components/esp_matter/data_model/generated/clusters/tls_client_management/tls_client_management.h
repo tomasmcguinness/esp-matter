@@ -35,7 +35,8 @@ command_t *create_remove_endpoint(cluster_t *cluster);
 } /* command */
 
 typedef struct config {
-    config() {}
+    uint8_t max_provisioned;
+    config() : max_provisioned(0) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

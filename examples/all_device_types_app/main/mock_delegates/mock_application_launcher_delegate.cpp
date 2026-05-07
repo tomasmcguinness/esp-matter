@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_application_launcher_delegate.h"
 
@@ -29,7 +30,7 @@ void MockApplicationLauncherDelegate::HandleLaunchApp(CommandResponseHelper<Laun
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     LauncherResponseType response;
     response.status = ApplicationLauncherStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockApplicationLauncherDelegate::HandleStopApp(CommandResponseHelper<LauncherResponseType>  &helper, const Application  &application)
@@ -38,7 +39,7 @@ void MockApplicationLauncherDelegate::HandleStopApp(CommandResponseHelper<Launch
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     LauncherResponseType response;
     response.status = ApplicationLauncherStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 void MockApplicationLauncherDelegate::HandleHideApp(CommandResponseHelper<LauncherResponseType>  &helper, const Application  &application)
@@ -47,7 +48,7 @@ void MockApplicationLauncherDelegate::HandleHideApp(CommandResponseHelper<Launch
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     LauncherResponseType response;
     response.status = ApplicationLauncherStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 } // namespace ApplicationLauncher

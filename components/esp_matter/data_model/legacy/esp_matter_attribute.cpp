@@ -655,6 +655,40 @@ attribute_t *create_current_fabric_index(cluster_t *cluster, uint8_t value)
 } /* attribute */
 } /* operational_credentials */
 
+namespace groupcast {
+namespace attribute {
+attribute_t *create_membership(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
+{
+    return esp_matter::attribute::create(cluster, Groupcast::Attributes::Membership::Id,
+                                         ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_array(value, length, count));
+}
+
+attribute_t *create_max_membership_count(cluster_t *cluster, uint16_t value)
+{
+    return esp_matter::attribute::create(cluster, Groupcast::Attributes::MaxMembershipCount::Id,
+                                         ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint16(value));
+}
+
+attribute_t *create_max_mcast_address_count(cluster_t *cluster, uint16_t value)
+{
+    return esp_matter::attribute::create(cluster, Groupcast::Attributes::MaxMcastAddrCount::Id,
+                                         ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint16(value));
+}
+
+attribute_t *create_used_mcast_address_count(cluster_t *cluster, uint16_t value)
+{
+    return esp_matter::attribute::create(cluster, Groupcast::Attributes::UsedMcastAddrCount::Id,
+                                         ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint16(value));
+}
+
+attribute_t *create_fabric_under_test(cluster_t *cluster, uint8_t value)
+{
+    return esp_matter::attribute::create(cluster, Groupcast::Attributes::FabricUnderTest::Id,
+                                         ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint8(value));
+}
+} /* attribute */
+} /* groupcast */
+
 namespace group_key_management {
 namespace attribute {
 

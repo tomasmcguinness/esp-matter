@@ -116,20 +116,6 @@ CHIP_ERROR MockCameraAVStreamManagementDelegate::PersistentAttributesLoadedCallb
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR MockCameraAVStreamManagementDelegate::OnTransportAcquireAudioVideoStreams(uint16_t audioStreamID, uint16_t videoStreamID)
-{
-    // Implement your own logic here.
-    ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR MockCameraAVStreamManagementDelegate::OnTransportReleaseAudioVideoStreams(uint16_t audioStreamID, uint16_t videoStreamID)
-{
-    // Implement your own logic here.
-    ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
-    return CHIP_NO_ERROR;
-}
-
 const std::vector<VideoStreamStruct>  &MockCameraAVStreamManagementDelegate::GetAllocatedVideoStreams() const
 {
     return mAllocatedVideoStreams;

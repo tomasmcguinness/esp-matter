@@ -37,7 +37,7 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "thermostat_cluster";
-constexpr uint16_t cluster_revision = 9;
+constexpr uint16_t cluster_revision = 11;
 
 static esp_err_t esp_matter_command_callback_setpoint_raise_lower(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                                   void *opaque_ptr)
@@ -127,35 +127,10 @@ esp_err_t add(cluster_t *cluster, config_t *config)
     attribute::create_occupancy(cluster, config->occupancy);
     attribute::create_unoccupied_cooling_setpoint(cluster, config->unoccupied_cooling_setpoint);
     attribute::create_unoccupied_heating_setpoint(cluster, config->unoccupied_heating_setpoint);
-    attribute::create_unoccupied_setback(cluster, config->unoccupied_setback);
-    attribute::create_unoccupied_setback_min(cluster, config->unoccupied_setback_min);
-    attribute::create_unoccupied_setback_max(cluster, config->unoccupied_setback_max);
 
     return ESP_OK;
 }
 } /* occupancy */
-
-namespace setback {
-uint32_t get_id()
-{
-    return Setback::Id;
-}
-
-esp_err_t add(cluster_t *cluster, config_t *config)
-{
-    VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
-    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
-    update_feature_map(cluster, get_id());
-    attribute::create_occupied_setback(cluster, config->occupied_setback);
-    attribute::create_occupied_setback_min(cluster, config->occupied_setback_min);
-    attribute::create_occupied_setback_max(cluster, config->occupied_setback_max);
-    attribute::create_unoccupied_setback(cluster, config->unoccupied_setback);
-    attribute::create_unoccupied_setback_min(cluster, config->unoccupied_setback_min);
-    attribute::create_unoccupied_setback_max(cluster, config->unoccupied_setback_max);
-
-    return ESP_OK;
-}
-} /* setback */
 
 namespace auto_mode {
 uint32_t get_id()
@@ -286,20 +261,6 @@ attribute_t *create_abs_max_cool_setpoint_limit(cluster_t *cluster, int16_t valu
     return attribute;
 }
 
-attribute_t *create_pi_cooling_demand(cluster_t *cluster, uint8_t value)
-{
-    attribute_t *attribute = esp_matter::attribute::create(cluster, PICoolingDemand::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(100));
-    return attribute;
-}
-
-attribute_t *create_pi_heating_demand(cluster_t *cluster, uint8_t value)
-{
-    attribute_t *attribute = esp_matter::attribute::create(cluster, PIHeatingDemand::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(100));
-    return attribute;
-}
-
 attribute_t *create_local_temperature_calibration(cluster_t *cluster, int8_t value)
 {
     attribute_t *attribute = esp_matter::attribute::create(cluster, LocalTemperatureCalibration::Id, ATTRIBUTE_FLAG_WRITABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_int8(value));
@@ -401,13 +362,6 @@ attribute_t *create_system_mode(cluster_t *cluster, uint8_t value)
     return attribute;
 }
 
-attribute_t *create_thermostat_running_mode(cluster_t *cluster, uint8_t value)
-{
-    attribute_t *attribute = esp_matter::attribute::create(cluster, ThermostatRunningMode::Id, ATTRIBUTE_FLAG_NONE, esp_matter_enum8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_enum8(0), esp_matter_enum8(2));
-    return attribute;
-}
-
 attribute_t *create_temperature_setpoint_hold(cluster_t *cluster, uint8_t value)
 {
     attribute_t *attribute = esp_matter::attribute::create(cluster, TemperatureSetpointHold::Id, ATTRIBUTE_FLAG_WRITABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_enum8(value));
@@ -419,13 +373,6 @@ attribute_t *create_temperature_setpoint_hold_duration(cluster_t *cluster, nulla
 {
     attribute_t *attribute = esp_matter::attribute::create(cluster, TemperatureSetpointHoldDuration::Id, ATTRIBUTE_FLAG_WRITABLE | ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_nullable_uint16(value));
     esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint16(0), esp_matter_nullable_uint16(1440));
-    return attribute;
-}
-
-attribute_t *create_thermostat_programming_operation_mode(cluster_t *cluster, uint8_t value)
-{
-    attribute_t *attribute = esp_matter::attribute::create(cluster, ThermostatProgrammingOperationMode::Id, ATTRIBUTE_FLAG_WRITABLE, esp_matter_bitmap8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_bitmap8(0), esp_matter_bitmap8(7));
     return attribute;
 }
 
@@ -454,60 +401,6 @@ attribute_t *create_setpoint_change_source_timestamp(cluster_t *cluster, uint32_
 {
     attribute_t *attribute = esp_matter::attribute::create(cluster, SetpointChangeSourceTimestamp::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint32(value));
     esp_matter::attribute::add_bounds(attribute, esp_matter_uint32(0), esp_matter_uint32(4294967294));
-    return attribute;
-}
-
-attribute_t *create_occupied_setback(cluster_t *cluster, nullable<uint8_t> value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(setback), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, OccupiedSetback::Id, ATTRIBUTE_FLAG_WRITABLE | ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_nullable_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint8(0), esp_matter_nullable_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_occupied_setback_min(cluster_t *cluster, nullable<uint8_t> value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(setback), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, OccupiedSetbackMin::Id, ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint8(0), esp_matter_nullable_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_occupied_setback_max(cluster_t *cluster, nullable<uint8_t> value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(has_feature(setback), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, OccupiedSetbackMax::Id, ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint8(0), esp_matter_nullable_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_unoccupied_setback(cluster_t *cluster, nullable<uint8_t> value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(((has_feature(setback)) && (has_feature(occupancy))), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, UnoccupiedSetback::Id, ATTRIBUTE_FLAG_WRITABLE | ATTRIBUTE_FLAG_NULLABLE | ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_nullable_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint8(0), esp_matter_nullable_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_unoccupied_setback_min(cluster_t *cluster, nullable<uint8_t> value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(((has_feature(setback)) && (has_feature(occupancy))), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, UnoccupiedSetbackMin::Id, ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint8(0), esp_matter_nullable_uint8(254));
-    return attribute;
-}
-
-attribute_t *create_unoccupied_setback_max(cluster_t *cluster, nullable<uint8_t> value)
-{
-    uint32_t feature_map = get_feature_map_value(cluster);
-    VerifyOrReturnValue(((has_feature(setback)) && (has_feature(occupancy))), NULL);
-    attribute_t *attribute = esp_matter::attribute::create(cluster, UnoccupiedSetbackMax::Id, ATTRIBUTE_FLAG_NULLABLE, esp_matter_nullable_uint8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_nullable_uint8(0), esp_matter_nullable_uint8(254));
     return attribute;
 }
 
@@ -737,9 +630,6 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         }
         if (feature_map & feature::occupancy::get_id()) {
             VerifyOrReturnValue(feature::occupancy::add(cluster, &(config->features.occupancy)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
-        }
-        if (feature_map & feature::setback::get_id()) {
-            VerifyOrReturnValue(feature::setback::add(cluster, &(config->features.setback)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::local_temperature_not_exposed::get_id()) {
             VerifyOrReturnValue(feature::local_temperature_not_exposed::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));

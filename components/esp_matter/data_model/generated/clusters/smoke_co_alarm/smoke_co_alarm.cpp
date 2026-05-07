@@ -35,7 +35,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "smoke_co_alarm_cluster";
-constexpr uint16_t cluster_revision = 1;
+constexpr uint16_t cluster_revision = 2;
 
 static esp_err_t esp_matter_command_callback_self_test_request(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                                void *opaque_ptr)
@@ -95,7 +95,7 @@ namespace attribute {
 attribute_t *create_expressed_state(cluster_t *cluster, uint8_t value)
 {
     attribute_t *attribute = esp_matter::attribute::create(cluster, ExpressedState::Id, ATTRIBUTE_FLAG_NONVOLATILE, esp_matter_enum8(value));
-    esp_matter::attribute::add_bounds(attribute, esp_matter_enum8(0), esp_matter_enum8(8));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_enum8(0), esp_matter_enum8(9));
     return attribute;
 }
 

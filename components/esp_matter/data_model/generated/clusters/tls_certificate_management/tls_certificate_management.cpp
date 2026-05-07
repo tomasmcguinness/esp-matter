@@ -26,6 +26,7 @@
 #include <tls_certificate_management_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -44,7 +45,9 @@ namespace tls_certificate_management {
 namespace attribute {
 attribute_t *create_max_root_certificates(cluster_t *cluster, uint8_t value)
 {
-    return esp_matter::attribute::create(cluster, MaxRootCertificates::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, MaxRootCertificates::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(5), esp_matter_uint8(254));
+    return attribute;
 }
 
 attribute_t *create_provisioned_root_certificates(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
@@ -54,7 +57,9 @@ attribute_t *create_provisioned_root_certificates(cluster_t *cluster, uint8_t *v
 
 attribute_t *create_max_client_certificates(cluster_t *cluster, uint8_t value)
 {
-    return esp_matter::attribute::create(cluster, MaxClientCertificates::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, MaxClientCertificates::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(2), esp_matter_uint8(254));
+    return attribute;
 }
 
 attribute_t *create_provisioned_client_certificates(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
@@ -161,9 +166,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         /* Attributes not managed internally */
         global::attribute::create_cluster_revision(cluster, cluster_revision);
 
-        attribute::create_max_root_certificates(cluster, 0);
+        attribute::create_max_root_certificates(cluster, config->max_root_certificates);
+        attribute::create_max_client_certificates(cluster, config->max_client_certificates);
         attribute::create_provisioned_root_certificates(cluster, NULL, 0, 0);
-        attribute::create_max_client_certificates(cluster, 0);
         attribute::create_provisioned_client_certificates(cluster, NULL, 0, 0);
         command::create_provision_root_certificate(cluster);
         command::create_provision_root_certificate_response(cluster);
@@ -180,6 +185,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         command::create_lookup_client_certificate(cluster);
         command::create_lookup_client_certificate_response(cluster);
         command::create_remove_client_certificate(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterTlsCertificateManagementClusterServerInitCallback,
+                                                 ESPMatterTlsCertificateManagementClusterServerShutdownCallback);
     }
 
     return cluster;

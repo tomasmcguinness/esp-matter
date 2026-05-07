@@ -37,7 +37,7 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::cluster::delegate_cb;
 
 static const char *TAG = "fan_control_cluster";
-constexpr uint16_t cluster_revision = 5;
+constexpr uint16_t cluster_revision = 6;
 
 static esp_err_t esp_matter_command_callback_step(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
                                                   void *opaque_ptr)

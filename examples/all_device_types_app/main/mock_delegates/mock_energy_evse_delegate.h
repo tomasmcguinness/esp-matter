@@ -8,16 +8,13 @@
 
 #pragma once
 
-#include <app/clusters/energy-evse-server/energy-evse-server.h>
+#include <app/clusters/energy-evse-server/EnergyEvseDelegate.h>
 
 /*
  * Mock EnergyEVSE Delegate Implementation
- * This file provides a mock implementation of the EnergyEVSE::Delegate interface
- * that returns success for all methods.
- * For more details, take a look at the delegate interface in the Matter SDK.
- * 1. Delegate Interface: https://github.com/project-chip/connectedhomeip/blob/d144bbb/src/app/clusters/energy-evse-server/energy-evse-server.h
- * 2. Delegate Implementation: https://github.com/project-chip/connectedhomeip/blob/d144bbb/examples/energy-management-app/energy-management-common/energy-evse/include/EnergyEvseDelegateImpl.h and
- *    https://github.com/project-chip/connectedhomeip/blob/d144bbb/examples/energy-management-app/energy-management-common/energy-evse/src/EnergyEvseDelegateImpl.cpp
+ * This file provides a mock implementation of the EnergyEvse::Delegate interface
+ * that returns success for all command methods and no-ops attribute change callbacks.
+ * See EnergyEvseDelegate.h in the Matter SDK.
  */
 
 namespace chip {
@@ -50,44 +47,30 @@ public:
 
     Protocols::InteractionModel::Status ClearTargets() override;
 
-    // ------------------------------------------------------------------
-    // Get attribute methods
-    StateEnum GetState() override;
-    SupplyStateEnum GetSupplyState() override;
-    FaultStateEnum GetFaultState() override;
-    DataModel::Nullable<uint32_t> GetChargingEnabledUntil() override;
-    DataModel::Nullable<uint32_t> GetDischargingEnabledUntil() override;
-    int64_t GetCircuitCapacity() override;
-    int64_t GetMinimumChargeCurrent() override;
-    int64_t GetMaximumChargeCurrent() override;
-    int64_t GetMaximumDischargeCurrent() override;
-    int64_t GetUserMaximumChargeCurrent() override;
-    uint32_t GetRandomizationDelayWindow() override;
-    /* PREF attributes */
-    DataModel::Nullable<uint32_t> GetNextChargeStartTime() override;
-    DataModel::Nullable<uint32_t> GetNextChargeTargetTime() override;
-    DataModel::Nullable<int64_t> GetNextChargeRequiredEnergy() override;
-    DataModel::Nullable<Percent> GetNextChargeTargetSoC() override;
-    DataModel::Nullable<uint16_t> GetApproximateEVEfficiency() override;
+    void OnStateChanged(StateEnum newValue) override;
+    void OnSupplyStateChanged(SupplyStateEnum newValue) override;
+    void OnFaultStateChanged(FaultStateEnum newValue) override;
+    void OnChargingEnabledUntilChanged(DataModel::Nullable<uint32_t> newValue) override;
+    void OnDischargingEnabledUntilChanged(DataModel::Nullable<uint32_t> newValue) override;
+    void OnCircuitCapacityChanged(int64_t newValue) override;
+    void OnMinimumChargeCurrentChanged(int64_t newValue) override;
+    void OnMaximumChargeCurrentChanged(int64_t newValue) override;
+    void OnMaximumDischargeCurrentChanged(int64_t newValue) override;
+    void OnUserMaximumChargeCurrentChanged(int64_t newValue) override;
+    void OnRandomizationDelayWindowChanged(uint32_t newValue) override;
+    void OnNextChargeStartTimeChanged(DataModel::Nullable<uint32_t> newValue) override;
+    void OnNextChargeTargetTimeChanged(DataModel::Nullable<uint32_t> newValue) override;
+    void OnNextChargeRequiredEnergyChanged(DataModel::Nullable<int64_t> newValue) override;
+    void OnNextChargeTargetSoCChanged(DataModel::Nullable<Percent> newValue) override;
+    void OnApproximateEVEfficiencyChanged(DataModel::Nullable<uint16_t> newValue) override;
+    void OnStateOfChargeChanged(DataModel::Nullable<Percent> newValue) override;
+    void OnBatteryCapacityChanged(DataModel::Nullable<int64_t> newValue) override;
+    void OnVehicleIDChanged(DataModel::Nullable<CharSpan> newValue) override;
+    void OnSessionIDChanged(DataModel::Nullable<uint32_t> newValue) override;
+    void OnSessionDurationChanged(DataModel::Nullable<uint32_t> newValue) override;
+    void OnSessionEnergyChargedChanged(DataModel::Nullable<int64_t> newValue) override;
+    void OnSessionEnergyDischargedChanged(DataModel::Nullable<int64_t> newValue) override;
 
-    /* SOC attributes */
-    DataModel::Nullable<Percent> GetStateOfCharge() override;
-    DataModel::Nullable<int64_t> GetBatteryCapacity() override;
-
-    /* PNC attributes*/
-    DataModel::Nullable<CharSpan> GetVehicleID() override;
-
-    /* Session SESS attributes */
-    DataModel::Nullable<uint32_t> GetSessionID() override;
-    DataModel::Nullable<uint32_t> GetSessionDuration() override;
-    DataModel::Nullable<int64_t> GetSessionEnergyCharged() override;
-    DataModel::Nullable<int64_t> GetSessionEnergyDischarged() override;
-
-    // ------------------------------------------------------------------
-    // Set attribute methods
-    CHIP_ERROR SetUserMaximumChargeCurrent(int64_t aNewValue) override;
-    CHIP_ERROR SetRandomizationDelayWindow(uint32_t aNewValue) override;
-    CHIP_ERROR SetApproximateEVEfficiency(DataModel::Nullable<uint16_t> aNewValue) override;
 private:
     static constexpr const char * LOG_TAG = "energy-evse";
 };

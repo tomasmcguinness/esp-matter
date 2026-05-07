@@ -20,6 +20,8 @@
 #include <clusters/WiFiNetworkDiagnostics/ClusterId.h>
 #include <data_model/esp_matter_data_model.h>
 #include <data_model_provider/esp_matter_data_model_provider.h>
+#include <data_model/esp_matter_attribute_helpers.h>
+#include <lib/support/logging/CHIPLogging.h>
 #include <unordered_map>
 
 using namespace chip;
@@ -41,22 +43,16 @@ bool IsAttributeEnabled(EndpointId endpointId, AttributeId attributeId)
     return endpoint::is_attribute_enabled(endpointId, WiFiNetworkDiagnostics::Id, attributeId);
 }
 
-uint32_t GetFeatureMap(EndpointId endpointId)
-{
-    attribute_t *attribute = attribute::get(endpointId, WiFiNetworkDiagnostics::Id, Globals::Attributes::FeatureMap::Id);
-    VerifyOrReturnValue(attribute, 0);
-
-    /* Update the value if the attribute already exists */
-    esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-    VerifyOrReturnValue(attribute::get_val_internal(attribute, &val) == ESP_OK, 0);
-    return val.val.u32;
-}
-
 } // namespace
 
 void ESPMatterWiFiNetworkDiagnosticsClusterServerInitCallback(EndpointId endpointId)
 {
-    if (!IsClusterEnabled(endpointId) && gServers[endpointId].IsConstructed()) {
+    if (!IsClusterEnabled(endpointId)) {
+        if (gServers[endpointId].IsConstructed()) {
+            return;
+        }
+        ChipLogError(AppServer,
+                     "WiFiNetworkDiagnostics: cluster missing in esp-matter data model for endpoint %u", endpointId);
         return;
     }
     WiFiDiagnosticsServerCluster::OptionalAttributeSet attrSet;
@@ -68,7 +64,8 @@ void ESPMatterWiFiNetworkDiagnosticsClusterServerInitCallback(EndpointId endpoin
     // and do not properly support secondary network interfaces or per-endpoint diagnostics.
     // See issue:#40317
     gServers[endpointId].Create(endpointId, DeviceLayer::GetDiagnosticDataProvider(), attrSet,
-                                BitFlags<WiFiNetworkDiagnostics::Feature>(GetFeatureMap(endpointId)));
+                                BitFlags<WiFiNetworkDiagnostics::Feature>(
+                                    read_feature_map_u32(endpointId, WiFiNetworkDiagnostics::Id)));
 
     CHIP_ERROR err = esp_matter::data_model::provider::get_instance().registry().Register(gServers[endpointId].Registration());
     if (err != CHIP_NO_ERROR) {

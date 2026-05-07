@@ -26,6 +26,7 @@
 #include <camera_av_settings_user_level_management_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -65,14 +66,15 @@ uint32_t get_id()
     return MechanicalPan::Id;
 }
 
-esp_err_t add(cluster_t *cluster)
+esp_err_t add(cluster_t *cluster, config_t *config)
 {
     VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
+    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
     update_feature_map(cluster, get_id());
+    attribute::create_pan_min(cluster, config->pan_min);
+    attribute::create_pan_max(cluster, config->pan_max);
+    attribute::create_movement_state(cluster, config->movement_state);
     attribute::create_mptz_position(cluster, NULL, 0, 0);
-    attribute::create_pan_min(cluster, 0);
-    attribute::create_pan_max(cluster, 0);
-    attribute::create_movement_state(cluster, 0);
     command::create_mptz_set_position(cluster);
     command::create_mptz_relative_move(cluster);
 
@@ -86,14 +88,15 @@ uint32_t get_id()
     return MechanicalTilt::Id;
 }
 
-esp_err_t add(cluster_t *cluster)
+esp_err_t add(cluster_t *cluster, config_t *config)
 {
     VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
+    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
     update_feature_map(cluster, get_id());
+    attribute::create_tilt_min(cluster, config->tilt_min);
+    attribute::create_tilt_max(cluster, config->tilt_max);
+    attribute::create_movement_state(cluster, config->movement_state);
     attribute::create_mptz_position(cluster, NULL, 0, 0);
-    attribute::create_tilt_min(cluster, 0);
-    attribute::create_tilt_max(cluster, 0);
-    attribute::create_movement_state(cluster, 0);
     command::create_mptz_set_position(cluster);
     command::create_mptz_relative_move(cluster);
 
@@ -107,13 +110,14 @@ uint32_t get_id()
     return MechanicalZoom::Id;
 }
 
-esp_err_t add(cluster_t *cluster)
+esp_err_t add(cluster_t *cluster, config_t *config)
 {
     VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
+    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
     update_feature_map(cluster, get_id());
+    attribute::create_zoom_max(cluster, config->zoom_max);
+    attribute::create_movement_state(cluster, config->movement_state);
     attribute::create_mptz_position(cluster, NULL, 0, 0);
-    attribute::create_zoom_max(cluster, 0);
-    attribute::create_movement_state(cluster, 0);
     command::create_mptz_set_position(cluster);
     command::create_mptz_relative_move(cluster);
 
@@ -127,13 +131,14 @@ uint32_t get_id()
     return MechanicalPresets::Id;
 }
 
-esp_err_t add(cluster_t *cluster)
+esp_err_t add(cluster_t *cluster, config_t *config)
 {
     VerifyOrReturnError(cluster, ESP_ERR_INVALID_ARG);
+    VerifyOrReturnError(config, ESP_ERR_INVALID_ARG);
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnError(((has_feature(mechanical_pan)) || (has_feature(mechanical_tilt)) || (has_feature(mechanical_zoom))), ESP_ERR_INVALID_ARG);
     update_feature_map(cluster, get_id());
-    attribute::create_max_presets(cluster, 0);
+    attribute::create_max_presets(cluster, config->max_presets);
     attribute::create_mptz_presets(cluster, NULL, 0, 0);
     command::create_mptz_move_to_preset(cluster);
     command::create_mptz_save_preset(cluster);
@@ -157,7 +162,9 @@ attribute_t *create_max_presets(cluster_t *cluster, uint8_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(mechanical_presets), NULL);
-    return esp_matter::attribute::create(cluster, MaxPresets::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, MaxPresets::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(0), esp_matter_uint8(254));
+    return attribute;
 }
 
 attribute_t *create_mptz_presets(cluster_t *cluster, uint8_t *value, uint16_t length, uint16_t count)
@@ -178,42 +185,54 @@ attribute_t *create_zoom_max(cluster_t *cluster, uint8_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(mechanical_zoom), NULL);
-    return esp_matter::attribute::create(cluster, ZoomMax::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_uint8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, ZoomMax::Id, ATTRIBUTE_FLAG_NONE, esp_matter_uint8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_uint8(2), esp_matter_uint8(100));
+    return attribute;
 }
 
 attribute_t *create_tilt_min(cluster_t *cluster, int16_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(mechanical_tilt), NULL);
-    return esp_matter::attribute::create(cluster, TiltMin::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_int16(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, TiltMin::Id, ATTRIBUTE_FLAG_NONE, esp_matter_int16(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_int16(-180), esp_matter_int16(0));
+    return attribute;
 }
 
 attribute_t *create_tilt_max(cluster_t *cluster, int16_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(mechanical_tilt), NULL);
-    return esp_matter::attribute::create(cluster, TiltMax::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_int16(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, TiltMax::Id, ATTRIBUTE_FLAG_NONE, esp_matter_int16(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_int16(1), esp_matter_int16(180));
+    return attribute;
 }
 
 attribute_t *create_pan_min(cluster_t *cluster, int16_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(mechanical_pan), NULL);
-    return esp_matter::attribute::create(cluster, PanMin::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_int16(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, PanMin::Id, ATTRIBUTE_FLAG_NONE, esp_matter_int16(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_int16(-180), esp_matter_int16(0));
+    return attribute;
 }
 
 attribute_t *create_pan_max(cluster_t *cluster, int16_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(has_feature(mechanical_pan), NULL);
-    return esp_matter::attribute::create(cluster, PanMax::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_int16(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, PanMax::Id, ATTRIBUTE_FLAG_NONE, esp_matter_int16(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_int16(1), esp_matter_int16(180));
+    return attribute;
 }
 
 attribute_t *create_movement_state(cluster_t *cluster, uint8_t value)
 {
     uint32_t feature_map = get_feature_map_value(cluster);
     VerifyOrReturnValue(((has_feature(mechanical_pan)) || (has_feature(mechanical_tilt)) || (has_feature(mechanical_zoom))), NULL);
-    return esp_matter::attribute::create(cluster, MovementState::Id, ATTRIBUTE_FLAG_MANAGED_INTERNALLY, esp_matter_enum8(value));
+    attribute_t *attribute = esp_matter::attribute::create(cluster, MovementState::Id, ATTRIBUTE_FLAG_NONE, esp_matter_enum8(value));
+    esp_matter::attribute::add_bounds(attribute, esp_matter_enum8(0), esp_matter_enum8(1));
+    return attribute;
 }
 
 } /* attribute */
@@ -300,17 +319,20 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
             VerifyOrReturnValue(feature::digital_ptz::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::mechanical_pan::get_id()) {
-            VerifyOrReturnValue(feature::mechanical_pan::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            VerifyOrReturnValue(feature::mechanical_pan::add(cluster, &(config->features.mechanical_pan)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::mechanical_tilt::get_id()) {
-            VerifyOrReturnValue(feature::mechanical_tilt::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            VerifyOrReturnValue(feature::mechanical_tilt::add(cluster, &(config->features.mechanical_tilt)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::mechanical_zoom::get_id()) {
-            VerifyOrReturnValue(feature::mechanical_zoom::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            VerifyOrReturnValue(feature::mechanical_zoom::add(cluster, &(config->features.mechanical_zoom)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
         if (feature_map & feature::mechanical_presets::get_id()) {
-            VerifyOrReturnValue(feature::mechanical_presets::add(cluster) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
+            VerifyOrReturnValue(feature::mechanical_presets::add(cluster, &(config->features.mechanical_presets)) == ESP_OK, ABORT_CLUSTER_CREATE(cluster));
         }
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterCameraAvSettingsUserLevelManagementClusterServerInitCallback,
+                                                 ESPMatterCameraAvSettingsUserLevelManagementClusterServerShutdownCallback);
     }
 
     if (flags & CLUSTER_FLAG_CLIENT) {

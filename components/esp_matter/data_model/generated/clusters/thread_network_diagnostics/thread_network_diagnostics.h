@@ -21,6 +21,9 @@ namespace esp_matter {
 namespace cluster {
 namespace thread_network_diagnostics {
 
+const uint8_t k_max_network_name_length = 16u;
+const uint8_t k_max_mesh_local_prefix_length = 17u;
+const uint8_t k_max_channel_page_0_mask_length = 4u;
 namespace feature {
 namespace packet_counts {
 uint32_t get_id();
@@ -28,8 +31,12 @@ esp_err_t add(cluster_t *cluster);
 } /* packet_counts */
 
 namespace error_counts {
+typedef struct config {
+    uint64_t overrun_count;
+    config() : overrun_count(0) {}
+} config_t;
 uint32_t get_id();
-esp_err_t add(cluster_t *cluster);
+esp_err_t add(cluster_t *cluster, config_t *config);
 } /* error_counts */
 
 namespace mle_counts {
@@ -120,7 +127,19 @@ event_t *create_network_fault_change(cluster_t *cluster);
 } /* event */
 
 typedef struct config {
-    config() {}
+    nullable<uint16_t> channel;
+    nullable<uint8_t> routing_role;
+    char network_name[k_max_network_name_length + 1];
+    nullable<uint16_t> pan_id;
+    nullable<uint64_t> extended_pan_id;
+    uint8_t mesh_local_prefix[k_max_mesh_local_prefix_length];
+    nullable<uint32_t> partition_id;
+    nullable<uint16_t> weighting;
+    nullable<uint16_t> data_version;
+    nullable<uint16_t> stable_data_version;
+    nullable<uint8_t> leader_router_id;
+    uint8_t channel_page_0_mask[k_max_channel_page_0_mask_length];
+    config() : channel(0), routing_role(0), network_name{0}, pan_id(0), extended_pan_id(0), mesh_local_prefix{0}, partition_id(0), weighting(0), data_version(0), stable_data_version(0), leader_router_id(0), channel_page_0_mask{0} {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

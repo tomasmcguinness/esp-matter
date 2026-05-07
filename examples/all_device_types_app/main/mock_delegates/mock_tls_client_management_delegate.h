@@ -8,14 +8,14 @@
 
 #pragma once
 
-#include <app/clusters/tls-client-management-server/TlsClientManagementCluster.h>
+#include <app/clusters/tls-client-management-server/TLSClientManagementCluster.h>
 #include <protocols/interaction_model/StatusCode.h>
 
 namespace chip {
 namespace app {
 namespace Clusters {
 
-class MockTlsClientManagementDelegate : public TlsClientManagementDelegate {
+class MockTlsClientManagementDelegate : public TLSClientManagementDelegate {
 public:
     MockTlsClientManagementDelegate() = default;
     virtual ~MockTlsClientManagementDelegate() = default;

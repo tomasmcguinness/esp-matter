@@ -74,8 +74,7 @@ event_t *create_active_changed(cluster_t *cluster);
 
 typedef struct config {
     bool reachable;
-    char unique_id[k_max_unique_id_length + 1];
-    config() : reachable(true), unique_id{0} {}
+    config() : reachable(true) {}
 } config_t;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags);

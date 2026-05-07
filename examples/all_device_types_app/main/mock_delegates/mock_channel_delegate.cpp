@@ -7,6 +7,7 @@
 */
 
 #include "esp_log.h"
+#include <lib/core/CHIPError.h>
 
 #include "mock_channel_delegate.h"
 
@@ -43,7 +44,7 @@ void MockChannelDelegate::HandleChangeChannel(CommandResponseHelper<Commands::Ch
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::ChangeChannelResponse::Type response;
     response.status = ChannelStatusEnum::kSuccess;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 bool MockChannelDelegate::HandleChangeChannelByNumber(const uint16_t  &majorNumber, const uint16_t  &minorNumber)
@@ -71,7 +72,7 @@ void MockChannelDelegate::HandleGetProgramGuide(CommandResponseHelper<Commands::
     // Implement your own logic here.
     ESP_LOGE(LOG_TAG, "%s is not implemented", __func__);
     Commands::ProgramGuideResponse::Type response;
-    helper.Success(response);
+    RETURN_SAFELY_IGNORED helper.Success(response);
 }
 
 bool MockChannelDelegate::HandleRecordProgram(const chip::CharSpan  &programIdentifier, bool shouldRecordSeries,

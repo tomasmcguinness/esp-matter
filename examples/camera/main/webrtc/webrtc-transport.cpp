@@ -22,7 +22,11 @@
 WebrtcTransport::WebrtcTransport()
 {
     ChipLogProgress(Camera, "WebrtcTransport created");
-    mRequestArgs = { 0, 0, 0, 0, 0, 0 }; // Initialize request arguments to zero
+    mRequestArgs.sessionId             = 0;
+    mRequestArgs.peerNodeId          = 0;
+    mRequestArgs.fabricIndex         = 0;
+    mRequestArgs.originatingEndpointId = 0;
+    mRequestArgs.peerId              = chip::ScopedNodeId();
 }
 
 WebrtcTransport::~WebrtcTransport()

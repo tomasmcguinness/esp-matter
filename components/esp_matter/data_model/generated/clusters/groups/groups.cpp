@@ -26,6 +26,7 @@
 #include <groups_ids.h>
 #include <binding.h>
 #include <esp_matter_data_model_priv.h>
+#include <app/ClusterCallbacks.h>
 
 using namespace chip::app::Clusters;
 using chip::app::CommandHandler;
@@ -35,79 +36,7 @@ using namespace esp_matter;
 using namespace esp_matter::cluster;
 
 static const char *TAG = "groups_cluster";
-constexpr uint16_t cluster_revision = 4;
-
-static esp_err_t esp_matter_command_callback_add_group(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                       void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::AddGroup::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterAddGroupCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_view_group(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                        void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::ViewGroup::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterViewGroupCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_get_group_membership(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                                  void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::GetGroupMembership::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterGetGroupMembershipCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_remove_group(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                          void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::RemoveGroup::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterRemoveGroupCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_remove_all_groups(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                               void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::RemoveAllGroups::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterRemoveAllGroupsCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
-
-static esp_err_t esp_matter_command_callback_add_group_if_identifying(const ConcreteCommandPath &command_path, TLVReader &tlv_data,
-                                                                      void *opaque_ptr)
-{
-    chip::app::Clusters::Groups::Commands::AddGroupIfIdentifying::DecodableType command_data;
-    chip::app::CommandHandler *command_obj = (chip::app::CommandHandler *)opaque_ptr;
-    CHIP_ERROR error = command_data.Decode(tlv_data, command_obj->GetAccessingFabricIndex());
-    if (error == CHIP_NO_ERROR) {
-        emberAfGroupsClusterAddGroupIfIdentifyingCallback((CommandHandler *)opaque_ptr, command_path, command_data);
-    }
-    return ESP_OK;
-}
+constexpr uint16_t cluster_revision = 5;
 
 namespace esp_matter {
 namespace cluster {
@@ -143,7 +72,7 @@ attribute_t *create_name_support(cluster_t *cluster, uint8_t value)
 namespace command {
 command_t *create_add_group(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, AddGroup::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_add_group);
+    return esp_matter::command::create(cluster, AddGroup::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_add_group_response(cluster_t *cluster)
@@ -153,7 +82,7 @@ command_t *create_add_group_response(cluster_t *cluster)
 
 command_t *create_view_group(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, ViewGroup::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_view_group);
+    return esp_matter::command::create(cluster, ViewGroup::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_view_group_response(cluster_t *cluster)
@@ -163,7 +92,7 @@ command_t *create_view_group_response(cluster_t *cluster)
 
 command_t *create_get_group_membership(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, GetGroupMembership::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_get_group_membership);
+    return esp_matter::command::create(cluster, GetGroupMembership::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_get_group_membership_response(cluster_t *cluster)
@@ -173,7 +102,7 @@ command_t *create_get_group_membership_response(cluster_t *cluster)
 
 command_t *create_remove_group(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, RemoveGroup::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_remove_group);
+    return esp_matter::command::create(cluster, RemoveGroup::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_remove_group_response(cluster_t *cluster)
@@ -183,21 +112,19 @@ command_t *create_remove_group_response(cluster_t *cluster)
 
 command_t *create_remove_all_groups(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, RemoveAllGroups::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_remove_all_groups);
+    return esp_matter::command::create(cluster, RemoveAllGroups::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 command_t *create_add_group_if_identifying(cluster_t *cluster)
 {
-    return esp_matter::command::create(cluster, AddGroupIfIdentifying::Id, COMMAND_FLAG_ACCEPTED, esp_matter_command_callback_add_group_if_identifying);
+    return esp_matter::command::create(cluster, AddGroupIfIdentifying::Id, COMMAND_FLAG_ACCEPTED, NULL);
 }
 
 } /* command */
 
-const function_generic_t function_list[] = {
-    (function_generic_t)emberAfGroupsClusterServerInitCallback,
-};
+const function_generic_t *function_list = NULL;
 
-const int function_flags = CLUSTER_FLAG_INIT_FUNCTION;
+const int function_flags = CLUSTER_FLAG_NONE;
 
 cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
 {
@@ -226,6 +153,9 @@ cluster_t *create(endpoint_t *endpoint, config_t *config, uint8_t flags)
         command::create_remove_group_response(cluster);
         command::create_remove_all_groups(cluster);
         command::create_add_group_if_identifying(cluster);
+
+        cluster::set_init_and_shutdown_callbacks(cluster, ESPMatterGroupsClusterServerInitCallback,
+                                                 ESPMatterGroupsClusterServerShutdownCallback);
     }
 
     return cluster;
