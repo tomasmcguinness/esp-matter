@@ -503,6 +503,15 @@ typedef void (*plugin_server_init_callback_t)();
  */
 typedef void (*delegate_init_callback_t)(void *ptr, uint16_t endpoint_id);
 
+/** Cluster delegate server shutdown callback
+ *
+ * Counterpart of `delegate_init_callback_t`. Invoked during `endpoint::destroy()`
+ * with the managed instance pointer registered via
+ * `set_delegate_shutdown_callback_and_managed_instance()`. Implementations
+ * should release the managed instance (e.g. `delete`).
+ */
+typedef void (*delegate_shutdown_callback_t)(void *managed_instance, uint16_t endpoint_id);
+
 /** Cluster add bounds callback
  *
  * This callback will be called when the endpoints are initialised.
@@ -704,6 +713,24 @@ esp_err_t set_plugin_server_init_callback(cluster_t *cluster, plugin_server_init
  */
 esp_err_t set_delegate_and_init_callback(cluster_t *cluster, delegate_init_callback_t callback, void *delegate);
 
+/** Register a delegate shutdown callback together with its managed instance.
+ *
+ * Atomically stores the pair (callback, instance) on the cluster slot. The
+ * managed instance is the heap object created in the delegate init callback
+ * (e.g. an upstream cluster `Instance`); the callback is invoked during
+ * `endpoint::destroy()` with that instance to release it.
+ *
+ * @param[in] cluster Cluster handle.
+ * @param[in] callback Delegate shutdown callback.
+ * @param[in] instance Managed instance pointer.
+ *
+ * @return ESP_OK on success.
+ * @return error in case of failure.
+ */
+esp_err_t set_delegate_shutdown_callback_and_managed_instance(cluster_t *cluster,
+                                                              delegate_shutdown_callback_t callback,
+                                                              void *instance);
+
 /** Set server cluster add bounds callback
  *
  * @param[in] cluster Cluster handle.
@@ -733,6 +760,27 @@ plugin_server_init_callback_t get_plugin_server_init_callback(cluster_t *cluster
  * @return NULL in case of failure or if it has not been set.
  */
 delegate_init_callback_t get_delegate_init_callback(cluster_t *cluster);
+
+/** Get managed delegate instance pointer
+ *
+ * Used by delegate init callbacks to detect re-init and avoid double allocation.
+ *
+ * @param[in] cluster Cluster handle.
+ *
+ * @return Managed instance pointer previously set, or NULL.
+ */
+void *get_delegate_managed_instance(cluster_t *cluster);
+
+/** Invoke the delegate shutdown callback (if registered) and clear the slot.
+ *
+ * Called by `endpoint::destroy()` for each cluster. After invocation the
+ * callback and managed instance pointers are cleared, so a subsequent call is
+ * a no-op (idempotent).
+ *
+ * @param[in] cluster Cluster handle.
+ * @param[in] endpoint_id Endpoint id passed through to the callback.
+ */
+void delegate_shutdown(cluster_t *cluster, uint16_t endpoint_id);
 
 /** Get server cluster add bounds callback
  *
